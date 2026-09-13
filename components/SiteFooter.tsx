@@ -4,7 +4,6 @@ import { VeridexLogo } from "@/components/VeridexLogo";
 const product = [
   ["About", "/#about"],
   ["FAQ", "/#faq"],
-  ["Dashboard", "/dashboard"],
   ["Proof inspector", "/proofs/tx-892a-c4e"],
 ];
 

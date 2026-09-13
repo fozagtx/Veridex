@@ -5,8 +5,24 @@ import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 
 /**
- * Primary CTA. Never redirects to connect: it opens the wallet modal in
- * place. Once a wallet is connected, the same button enters the app.
+ * Drop lingering WalletConnect session keys on disconnect so a stale
+ * "shadow" session cannot block or hijack the next connect attempt.
+ */
+function clearStaleWalletSessions() {
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (key.startsWith("wc@2")) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // Storage unavailable, nothing to clear.
+  }
+}
+
+/**
+ * Primary CTA. Opens the wallet modal in place; a completed connection
+ * routes straight to the app. Already connected: enters the app directly.
  */
 export function ConnectWalletButton({
   label = "Connect wallet",
@@ -20,8 +36,11 @@ export function ConnectWalletButton({
   className?: string;
 }) {
   const { isConnected } = useAccount();
-  const { setOpen } = useModal();
   const router = useRouter();
+  const { setOpen } = useModal({
+    onConnect: () => router.push(connectedHref),
+    onDisconnect: clearStaleWalletSessions,
+  });
 
   return (
     <button
@@ -43,7 +62,11 @@ export function ConnectWalletButton({
 /** Header slot: connect button, or the account chip once connected. */
 export function AccountOrConnect({ className = "" }: { className?: string }) {
   const { isConnected } = useAccount();
-  const { setOpen } = useModal();
+  const router = useRouter();
+  const { setOpen } = useModal({
+    onConnect: () => router.push("/dashboard"),
+    onDisconnect: clearStaleWalletSessions,
+  });
 
   if (isConnected) {
     return <ConnectKitButton />;

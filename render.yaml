@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: veridex
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true

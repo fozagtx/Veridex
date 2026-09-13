@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { ConnectWalletButton } from "@/components/ConnectWallet";
-import { veridexConfig } from "@/veridex.config";
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -47,9 +46,6 @@ export function WalletTerminal() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain, isPending } = useSwitchChain();
-
-  const clearinghouseAddress = veridexConfig.clearinghouse;
-  const sourceVault = veridexConfig.sourceVault;
 
   const canPrepare = useMemo(() => {
     return Boolean(isConnected && address && Number(amount) > 0);
@@ -100,6 +96,14 @@ export function WalletTerminal() {
   }, [status]);
 
   useEffect(() => {
+    if (isConnected && address) {
+      setStatus(`Connected as ${shortAddress(address)}. Enter an amount and prepare your deposit.`);
+    } else {
+      setStatus("Connect your wallet to choose a facility and check your place in line.");
+    }
+  }, [isConnected, address]);
+
+  useEffect(() => {
     return () => {
       if (revertTimer.current) window.clearTimeout(revertTimer.current);
       if (shakeTimer.current) window.clearTimeout(shakeTimer.current);
@@ -129,9 +133,7 @@ export function WalletTerminal() {
     }
 
     clearErrorVisual();
-    setStatus(
-      `Ready to deposit ${amount} USDC from ${shortAddress(address)} into source vault ${shortAddress(sourceVault)}.`,
-    );
+    setStatus(`Ready to deposit ${amount} USDC from ${shortAddress(address)}.`);
   }
 
   return (
@@ -148,9 +150,9 @@ export function WalletTerminal() {
         </button>
       </div>
 
-      <div className={`t-input-wrap mt-6 ${isError ? "is-error" : ""}`}>
+      <div className={`t-input-wrap mt-5 ${isError ? "is-error" : ""}`}>
         <label className="block font-mono text-xs uppercase tracking-[0.5px] text-mutedForeground" htmlFor="amount">
-          Enter amount (USDC)
+          Amount (USDC)
         </label>
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
           <input
@@ -170,21 +172,10 @@ export function WalletTerminal() {
             disabled={!canPrepare}
             onClick={prepareDeposit}
           >
-            Prepare Sepolia deposit
+            Prepare deposit
           </button>
         </div>
         <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Enter a valid amount and connect on Sepolia."}</p>
-      </div>
-
-      <div className="mt-4 grid gap-3 text-xs text-mutedForeground md:grid-cols-2">
-        <div className="rounded-[8px] border border-border bg-muted p-3">
-          <span className="block font-mono text-[10px] uppercase tracking-[0.5px] text-mutedForeground">Source vault</span>
-          <span className="break-all font-mono text-foreground">{sourceVault}</span>
-        </div>
-        <div className="rounded-[8px] border border-border bg-muted p-3">
-          <span className="block font-mono text-[10px] uppercase tracking-[0.5px] text-mutedForeground">Clearinghouse</span>
-          <span className="break-all font-mono text-foreground">{clearinghouseAddress || "Set clearinghouse in veridex.config.ts"}</span>
-        </div>
       </div>
 
       <p ref={statusRef} className="t-text-swap mt-3 font-mono text-xs text-mutedForeground">Connect your wallet to choose a facility and check your place in line.</p>
