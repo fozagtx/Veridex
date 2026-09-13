@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { ConnectWalletButton } from "@/components/ConnectWallet";
-import { depositValue } from "@/lib/clearinghouse";
+import { depositValue, explorerTx, formatCtc, waitForTransaction, type Seniority } from "@/lib/clearinghouse";
 import {
   creditcoinId,
   getInjectedChainId,
@@ -40,7 +40,13 @@ function swapText(el: HTMLElement | null, next: string) {
   }, dur);
 }
 
-export function WalletTerminal() {
+export function WalletTerminal({
+  onDeposited,
+  locked,
+}: {
+  onDeposited?: () => void;
+  locked?: Seniority | null;
+}) {
   const [amount, setAmount] = useState("0.01");
   const [status, setStatus] = useState("Connect your wallet to choose a facility and check your place in line.");
   const [error, setError] = useState("");
@@ -48,6 +54,7 @@ export function WalletTerminal() {
   const [isShaking, setIsShaking] = useState(false);
   const [walletChainId, setWalletChainId] = useState<number | null>(null);
   const [isWorking, setIsWorking] = useState(false);
+  const [lastHash, setLastHash] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
@@ -135,12 +142,20 @@ export function WalletTerminal() {
   }, [isConnected, address]);
 
   useEffect(() => {
-    if (isConnected && address) {
-      setStatus(`Connected as ${shortAddress(address)}. Enter an amount and prepare your deposit.`);
-    } else {
+    if (!isConnected || !address) {
       setStatus("Connect your wallet to choose a facility and check your place in line.");
+      return;
     }
-  }, [isConnected, address]);
+    if (locked && locked.funder.toLowerCase() === address.toLowerCase()) {
+      setStatus(`You are #1 in line. ${formatCtc(locked.amount)} CTC is locked.`);
+      return;
+    }
+    if (locked) {
+      setStatus(`Connected as ${shortAddress(address)}. #1 is already ${shortAddress(locked.funder)}.`);
+      return;
+    }
+    setStatus(`Connected as ${shortAddress(address)}. Enter an amount and prepare your deposit.`);
+  }, [isConnected, address, locked]);
 
   useEffect(() => {
     return () => {
@@ -203,7 +218,11 @@ export function WalletTerminal() {
       await ensureCreditcoin();
       setStatus("Check MetaMask and confirm the deposit to the clearinghouse.");
       const hash = await sendClearinghouseFund(address, value);
-      setStatus(`Deposit sent to the clearinghouse. Tx ${hash.slice(0, 10)}…`);
+      setLastHash(hash);
+      setStatus("Deposit sent. Waiting for the block to lock your place…");
+      await waitForTransaction(hash);
+      onDeposited?.();
+      setStatus(`Place locked. Tx ${hash.slice(0, 10)}…`);
     } catch (cause) {
       const message = walletErrorMessage(cause);
       showError(message);
@@ -260,6 +279,16 @@ export function WalletTerminal() {
       </div>
 
       <p ref={statusRef} className="t-text-swap mt-3 font-mono text-xs text-mutedForeground">Connect your wallet to choose a facility and check your place in line.</p>
+      {lastHash ? (
+        <a
+          className="mt-2 inline-block font-mono text-xs text-brand underline-offset-2 hover:underline"
+          href={explorerTx(lastHash)}
+          rel="noreferrer"
+          target="_blank"
+        >
+          Open this deposit on Blockscout
+        </a>
+      ) : null}
     </div>
   );
 }

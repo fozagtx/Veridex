@@ -11,34 +11,39 @@ function Arrow() {
 const flow = ["Your wallet", "CC3 clearinghouse", "Rank locked"];
 
 /** Where a deposit travels, end to end. */
-export function FlowDiagram() {
+export function FlowDiagram({ locked = false }: { locked?: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {flow.map((label, index) => (
-        <span key={label} className="flex items-center gap-2">
-          <span
-            className={`rounded-full border px-3 py-1.5 font-mono text-[11px] ${
-              index === flow.length - 1
-                ? "border-brand text-brand"
-                : "border-border bg-background text-foreground"
-            }`}
-          >
-            {label}
+      {flow.map((label, index) => {
+        const isLast = index === flow.length - 1;
+        return (
+          <span key={label} className="flex items-center gap-2">
+            <span
+              className={`rounded-full border px-3 py-1.5 font-mono text-[11px] ${
+                isLast && locked
+                  ? "border-brand bg-brand text-white"
+                  : isLast
+                    ? "border-brand text-brand"
+                    : "border-border bg-background text-foreground"
+              }`}
+            >
+              {isLast && locked ? "Rank locked" : label}
+            </span>
+            {index < flow.length - 1 ? <Arrow /> : null}
           </span>
-          {index < flow.length - 1 ? <Arrow /> : null}
-        </span>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 /** Repayment stack: money flows top to bottom, #1 gets paid first. */
-export function TrancheDiagram() {
+export function TrancheDiagram({ youAreFirst = false }: { youAreFirst?: boolean }) {
   return (
     <div className="relative space-y-1.5 pl-5">
       <div aria-hidden="true" className="absolute bottom-2 left-1.5 top-2 w-px bg-border" />
-      <div className="flex items-center justify-between rounded-[6px] border border-brand/60 bg-card px-3 py-2">
-        <span className="text-xs font-semibold text-foreground">#1 in line</span>
+      <div className={`flex items-center justify-between rounded-[6px] border px-3 py-2 ${youAreFirst ? "border-brand bg-brand/5" : "border-brand/60 bg-card"}`}>
+        <span className="text-xs font-semibold text-foreground">#1 in line{youAreFirst ? " · you" : ""}</span>
         <span className="font-mono text-[10px] text-mutedForeground">repaid first</span>
       </div>
       <div className="flex items-center justify-between rounded-[6px] border border-border bg-card px-3 py-2">
@@ -50,18 +55,29 @@ export function TrancheDiagram() {
 }
 
 /** Queue positions: your rank lands in one of these slots. */
-export function QueueDiagram() {
+export function QueueDiagram({ filled = false, youAreFirst = false }: { filled?: boolean; youAreFirst?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      {["1", "2", "3"].map((position) => (
-        <span
-          key={position}
-          className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card font-mono text-[11px] text-foreground"
-        >
-          #{position}
-        </span>
-      ))}
-      <span className="ml-1 font-mono text-[10px] text-mutedForeground">your rank lands here</span>
+      {["1", "2", "3"].map((position) => {
+        const isYou = youAreFirst && position === "1";
+        return (
+          <span
+            key={position}
+            className={`grid h-7 w-7 place-items-center rounded-full border font-mono text-[11px] ${
+              isYou
+                ? "border-brand bg-brand text-white"
+                : filled && position === "1"
+                  ? "border-brand text-brand"
+                  : "border-border bg-card text-foreground"
+            }`}
+          >
+            #{position}
+          </span>
+        );
+      })}
+      <span className="ml-1 font-mono text-[10px] text-mutedForeground">
+        {youAreFirst ? "you are here" : filled ? "first seat taken" : "your rank lands here"}
+      </span>
     </div>
   );
 }
@@ -70,15 +86,17 @@ export function DiagramBlock({
   label,
   note,
   children,
+  live = false,
 }: {
   label: string;
   note: string;
   children: ReactNode;
+  live?: boolean;
 }) {
   return (
     <div className="rounded-[8px] border border-border bg-background p-4">
       <div className="flex items-center gap-2.5">
-        <span className="h-2 w-2 shrink-0 rounded-full bg-mutedForeground/50" />
+        <span className={`h-2 w-2 shrink-0 rounded-full ${live ? "bg-brand" : "bg-mutedForeground/50"}`} />
         <p className="text-sm font-semibold text-foreground">{label}</p>
       </div>
       <p className="mt-1 text-xs leading-5 text-mutedForeground">{note}</p>
