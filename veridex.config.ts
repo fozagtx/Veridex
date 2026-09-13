@@ -17,12 +17,14 @@ export const veridexConfig = {
       rpcUrl: "http://127.0.0.1:8545",
     },
   },
-  /** Sepolia vault the clearinghouse trusts for source deposits. */
+  /** Sepolia vault the clearinghouse trusts for source-chain proofs. */
   sourceVault: "0x71C000000000000000000000000000000000089A",
   /** Source chain key registered on Creditcoin for Sepolia proofs. */
   sourceChainKey: 11155111,
   /** Deployed VeridexClearinghouse address on Creditcoin CC3 testnet. */
   clearinghouse: "0x2133358Da6CeD8dD5E318A2342e5e0C237A0a09b",
+  /** Open demo facility. keccak256("veridex-facility-1"). */
+  facilityId: "0x5e383dd74f1f6bb14459a7e33f47d687360c708230d816115c06e86619d69d4a",
   /**
    * WalletConnect Cloud project ID for QR and mobile wallet connections.
    * Create a free project at https://cloud.reown.com, paste its ID here,

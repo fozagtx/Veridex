@@ -4,17 +4,17 @@ import { ConnectKitButton } from "connectkit";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
-import { sepolia } from "wagmi/chains";
 import { ConnectWalletButton } from "@/components/ConnectWallet";
+import { depositValue } from "@/lib/clearinghouse";
 import {
+  creditcoinId,
   getInjectedChainId,
   getInjectedProvider,
-  sendPrepareDeposit,
-  switchToSepolia,
-  waitForSepolia,
+  sendClearinghouseFund,
+  switchToCreditcoin,
+  waitForCreditcoin,
   walletErrorMessage,
 } from "@/lib/injectedWallet";
-import { veridexConfig } from "@/veridex.config";
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -41,7 +41,7 @@ function swapText(el: HTMLElement | null, next: string) {
 }
 
 export function WalletTerminal() {
-  const [amount, setAmount] = useState("250000");
+  const [amount, setAmount] = useState("0.01");
   const [status, setStatus] = useState("Connect your wallet to choose a facility and check your place in line.");
   const [error, setError] = useState("");
   const [isError, setIsError] = useState(false);
@@ -55,7 +55,7 @@ export function WalletTerminal() {
   const shakeTimer = useRef<number | null>(null);
 
   const { address, isConnected } = useAccount();
-  const onSepolia = walletChainId === sepolia.id;
+  const onCreditcoin = walletChainId === creditcoinId;
 
   const canPrepare = useMemo(() => {
     return Boolean(isConnected && address && Number(amount) > 0);
@@ -149,27 +149,27 @@ export function WalletTerminal() {
     };
   }, []);
 
-  async function ensureSepolia() {
+  async function ensureCreditcoin() {
     const current = await getInjectedChainId();
     setWalletChainId(current);
-    if (current === sepolia.id) {
+    if (current === creditcoinId) {
       return;
     }
-    setStatus("Check MetaMask and switch to Ethereum Sepolia.");
-    await switchToSepolia();
-    await waitForSepolia();
-    setWalletChainId(sepolia.id);
+    setStatus("Check MetaMask and switch to Creditcoin Testnet.");
+    await switchToCreditcoin();
+    await waitForCreditcoin();
+    setWalletChainId(creditcoinId);
   }
 
-  async function useSepolia() {
+  async function useCreditcoin() {
     if (isWorking) {
       return;
     }
     setIsWorking(true);
     clearErrorVisual();
     try {
-      await ensureSepolia();
-      setStatus("Wallet network set to Ethereum Sepolia.");
+      await ensureCreditcoin();
+      setStatus("Wallet network set to Creditcoin Testnet.");
     } catch (cause) {
       const message = walletErrorMessage(cause);
       showError(message);
@@ -185,13 +185,25 @@ export function WalletTerminal() {
       return;
     }
 
+    let value: bigint;
+    try {
+      value = depositValue(amount);
+    } catch {
+      showError("Enter a valid CTC amount.");
+      return;
+    }
+    if (value <= BigInt(0)) {
+      showError("Enter a valid CTC amount.");
+      return;
+    }
+
     setIsWorking(true);
     clearErrorVisual();
     try {
-      await ensureSepolia();
-      setStatus("Check MetaMask and confirm the Sepolia deposit.");
-      const hash = await sendPrepareDeposit(address, veridexConfig.sourceVault);
-      setStatus(`Deposit request sent from ${shortAddress(address)}. Tx ${hash.slice(0, 10)}…`);
+      await ensureCreditcoin();
+      setStatus("Check MetaMask and confirm the deposit to the clearinghouse.");
+      const hash = await sendClearinghouseFund(address, value);
+      setStatus(`Deposit sent to the clearinghouse. Tx ${hash.slice(0, 10)}…`);
     } catch (cause) {
       const message = walletErrorMessage(cause);
       showError(message);
@@ -208,20 +220,20 @@ export function WalletTerminal() {
         <button
           type="button"
           className={`rounded-[8px] border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-            onSepolia
+            onCreditcoin
               ? "border-border bg-background text-mutedForeground hover:bg-muted/60"
               : "border-brand bg-brand text-white hover:bg-brandDark"
           }`}
           disabled={isWorking}
-          onClick={() => void useSepolia()}
+          onClick={() => void useCreditcoin()}
         >
-          {isWorking ? "Check MetaMask" : onSepolia ? "On Sepolia" : "Use Sepolia"}
+          {isWorking ? "Check MetaMask" : onCreditcoin ? "On Creditcoin" : "Use Creditcoin"}
         </button>
       </div>
 
       <div className={`t-input-wrap mt-5 ${isError ? "is-error" : ""}`}>
         <label className="block font-mono text-xs uppercase tracking-[0.5px] text-mutedForeground" htmlFor="amount">
-          Amount (USDC)
+          Amount (CTC)
         </label>
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
           <input
@@ -244,7 +256,7 @@ export function WalletTerminal() {
             {isWorking ? "Check MetaMask" : "Prepare deposit"}
           </button>
         </div>
-        <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Prepare opens MetaMask. You must be on Ethereum Sepolia."}</p>
+        <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Prepare sends CTC to the live Creditcoin clearinghouse."}</p>
       </div>
 
       <p ref={statusRef} className="t-text-swap mt-3 font-mono text-xs text-mutedForeground">Connect your wallet to choose a facility and check your place in line.</p>

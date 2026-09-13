@@ -29,6 +29,7 @@ contract VeridexClearinghouse {
 
     mapping(bytes32 => SeniorityRecord) public seniority;
     mapping(bytes32 => bool) public processedProofs;
+    uint32 public depositCount;
 
     event SeniorityEstablished(bytes32 indexed tradeId, address indexed funder, uint256 blockHeight, uint32 txIndex);
     event JuniorPosition(bytes32 indexed tradeId, address indexed funder, uint32 txIndex, uint32 seniorTxIndex);
@@ -37,6 +38,14 @@ contract VeridexClearinghouse {
         require(_trustedSourceVault != address(0), "invalid vault");
         trustedSourceVault = _trustedSourceVault;
         sourceChainKey = _sourceChainKey;
+    }
+
+    function fund(bytes32 tradeId) external payable {
+        require(tradeId != bytes32(0), "invalid trade");
+        require(msg.value > 0, "invalid amount");
+
+        depositCount += 1;
+        _recordPosition(tradeId, msg.sender, msg.value, block.number, depositCount);
     }
 
     function processCapitalLock(
@@ -65,11 +74,22 @@ contract VeridexClearinghouse {
         require(valid, "invalid proof");
 
         uint32 txIndex = IBlockProver(BLOCK_PROVER).calculateTxIndex(merkleProof);
-        uint256 seniorityKey = (blockHeight << 32) | uint256(txIndex);
+        _recordPosition(tradeId, funder, amount, blockHeight, txIndex);
+        processedProofs[proofHash] = true;
+    }
 
+    function _recordPosition(
+        bytes32 tradeId,
+        address funder,
+        uint256 amount,
+        uint256 blockHeight,
+        uint32 txIndex
+    ) internal {
+        uint256 seniorityKey = (blockHeight << 32) | uint256(txIndex);
         SeniorityRecord storage current = seniority[tradeId];
+
         if (current.seniorityKey == 0 || seniorityKey < current.seniorityKey) {
-            if (current.funder != address(0)) {
+            if (current.funder != address(0) && current.funder != funder) {
                 emit JuniorPosition(tradeId, current.funder, current.txIndex, txIndex);
             }
 
@@ -82,10 +102,9 @@ contract VeridexClearinghouse {
             });
 
             emit SeniorityEstablished(tradeId, funder, blockHeight, txIndex);
-        } else {
-            emit JuniorPosition(tradeId, funder, txIndex, current.txIndex);
+            return;
         }
 
-        processedProofs[proofHash] = true;
+        emit JuniorPosition(tradeId, funder, txIndex, current.txIndex);
     }
 }

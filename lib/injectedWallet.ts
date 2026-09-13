@@ -1,5 +1,8 @@
-const SEPOLIA_ID = 11155111;
-const SEPOLIA_HEX = "0xaa36a7";
+import { veridexConfig } from "@/veridex.config";
+import { encodeFund, facilityId } from "@/lib/clearinghouse";
+
+const CREDITCOIN_ID = veridexConfig.chains.creditcoinTestnet.chainId;
+const CREDITCOIN_HEX = `0x${CREDITCOIN_ID.toString(16)}`;
 
 type EthereumProvider = {
   isMetaMask?: boolean;
@@ -50,7 +53,7 @@ export async function getInjectedChainId(): Promise<number | null> {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export async function switchToSepolia(): Promise<void> {
+export async function switchToCreditcoin(): Promise<void> {
   const provider = getInjectedProvider();
   if (!provider) {
     throw new Error("Open MetaMask, then try again.");
@@ -59,7 +62,7 @@ export async function switchToSepolia(): Promise<void> {
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: SEPOLIA_HEX }],
+      params: [{ chainId: CREDITCOIN_HEX }],
     });
   } catch (error) {
     const code = typeof error === "object" && error && "code" in error ? Number(error.code) : 0;
@@ -68,36 +71,36 @@ export async function switchToSepolia(): Promise<void> {
         method: "wallet_addEthereumChain",
         params: [
           {
-            chainId: SEPOLIA_HEX,
-            chainName: "Ethereum Sepolia",
-            nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
-            rpcUrls: ["https://rpc.sepolia.org"],
-            blockExplorerUrls: ["https://sepolia.etherscan.io"],
+            chainId: CREDITCOIN_HEX,
+            chainName: "Creditcoin Testnet",
+            nativeCurrency: { name: "Creditcoin", symbol: "CTC", decimals: 18 },
+            rpcUrls: [veridexConfig.chains.creditcoinTestnet.rpcUrl],
+            blockExplorerUrls: ["https://creditcoin-testnet.blockscout.com"],
           },
         ],
       });
       return;
     }
     if (code === 4001) {
-      throw new Error("You rejected the Sepolia switch in MetaMask.");
+      throw new Error("You rejected the Creditcoin switch in MetaMask.");
     }
-    throw error instanceof Error ? error : new Error("MetaMask could not switch to Sepolia.");
+    throw error instanceof Error ? error : new Error("MetaMask could not switch to Creditcoin.");
   }
 }
 
-export async function waitForSepolia(timeoutMs = 20000): Promise<void> {
+export async function waitForCreditcoin(timeoutMs = 20000): Promise<void> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     const chainId = await getInjectedChainId();
-    if (chainId === SEPOLIA_ID) {
+    if (chainId === CREDITCOIN_ID) {
       return;
     }
     await new Promise((resolve) => window.setTimeout(resolve, 300));
   }
-  throw new Error("MetaMask is still not on Sepolia.");
+  throw new Error("MetaMask is still not on Creditcoin Testnet.");
 }
 
-export async function sendPrepareDeposit(from: string, vault: string): Promise<string> {
+export async function sendClearinghouseFund(from: string, valueWei: bigint): Promise<string> {
   const provider = getInjectedProvider();
   if (!provider) {
     throw new Error("Open MetaMask, then try again.");
@@ -108,8 +111,9 @@ export async function sendPrepareDeposit(from: string, vault: string): Promise<s
     params: [
       {
         from,
-        to: vault,
-        value: "0x0",
+        to: veridexConfig.clearinghouse,
+        value: `0x${valueWei.toString(16)}`,
+        data: encodeFund(facilityId),
       },
     ],
   });
@@ -124,9 +128,14 @@ export function walletErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     const text = error.message.toLowerCase();
     if (text.includes("insufficient funds") || text.includes("gas")) {
-      return "You need a little Sepolia ETH for gas. Get it from a faucet, then try again.";
+      return "You need Creditcoin testnet CTC for the deposit and gas.";
+    }
+    if (text.includes("execution reverted") || text.includes("reverted")) {
+      return "The clearinghouse rejected the call. Redeploy the contract that includes fund().";
     }
     return error.message;
   }
   return "The wallet request failed.";
 }
+
+export const creditcoinId = CREDITCOIN_ID;

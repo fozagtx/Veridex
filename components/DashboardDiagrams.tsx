@@ -8,7 +8,7 @@ function Arrow() {
   );
 }
 
-const flow = ["Your wallet", "Source vault", "CC3 clearinghouse", "Rank locked"];
+const flow = ["Your wallet", "CC3 clearinghouse", "Rank locked"];
 
 /** Where a deposit travels, end to end. */
 export function FlowDiagram() {
