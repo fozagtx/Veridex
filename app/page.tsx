@@ -61,9 +61,9 @@ export default function Home() {
         </div>
         <div className="page-wrap relative grid min-h-[92vh] items-center gap-12 pb-24 pt-32 sm:pt-36 lg:grid-cols-2 lg:gap-10">
           <div>
-            <h1 className="text-5xl font-extrabold leading-[0.98] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              <span className="block">Loans</span>
-              <span className="block font-serif font-normal italic text-brand">MEV bots cannot speedrun</span>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+              Loans{" "}
+              <span className="font-serif font-normal italic text-brand">MEV bots cannot speedrun</span>
             </h1>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />
