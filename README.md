@@ -4,15 +4,15 @@
 
 # Veridex
 
-Veridex is on-chain lending. More than one wallet can fund the same loan. When the borrower pays it back, the wallet that confirmed first is paid first. A bot cannot jump the line.
+Veridex is on-chain lending where more than one wallet can fund the same loan, and when the borrower pays it back the wallet that confirmed first is paid first, so a bot cannot jump the line.
 
 ## What is it?
 
-This is a loan on Creditcoin. Several wallets put CTC into that loan. Before a send confirms, it sits in public, so a bot can see it, pay a higher fee, and confirm first.
+This is a loan on Creditcoin that several wallets fund with CTC, and before a send confirms it sits in public, so a bot can see it, pay a higher fee, and confirm first.
 
-When the borrower pays the loan back, the first wallet in line is paid first. If the bot confirmed first, the bot is paid first. You wait, or you lose.
+When the borrower pays the loan back, the first wallet in line is paid first, and if the bot confirmed first then the bot is paid first, which means you wait or you lose.
 
-Veridex keeps the line in confirm order on Creditcoin. Once your pay-in confirms, a later send cannot move in front of you.
+Veridex keeps the line in confirm order on Creditcoin, so once your pay-in confirms a later send cannot move in front of you.
 
 The working parts:
 

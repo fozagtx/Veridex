@@ -24,9 +24,9 @@ export function SiteFooter() {
               <span className="text-base font-bold tracking-tight">Veridex</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-6 text-mutedForeground">
-              On-chain lending. When several wallets fund the same loan, the
-              one that confirmed first is paid first. A bot cannot jump the
-              line.
+              On-chain lending where several wallets fund the same loan, and
+              the one that confirmed first is paid first, so a bot cannot jump
+              the line.
             </p>
           </div>
 
