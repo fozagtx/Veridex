@@ -22,7 +22,7 @@ export const veridexConfig = {
   /** Source chain key registered on Creditcoin for Sepolia proofs. */
   sourceChainKey: 11155111,
   /** Deployed VeridexClearinghouse address on Creditcoin CC3 testnet. */
-  clearinghouse: "0x2133358Da6CeD8dD5E318A2342e5e0C237A0a09b",
+  clearinghouse: "0x890d6Fdc4aB8B55bA228Fb991257ad2Bac673761",
   /** Open demo facility. keccak256("veridex-facility-1"). */
   facilityId: "0x5e383dd74f1f6bb14459a7e33f47d687360c708230d816115c06e86619d69d4a",
   /**

@@ -17,7 +17,7 @@ middleman can reorder it afterwards.
 - Proof inspector at `/proofs/tx-892a-c4e`
 - Hardhat contract project in `contracts/`
 - `VeridexClearinghouse` deployed on Creditcoin CC3 testnet at
-  `0x2133358Da6CeD8dD5E318A2342e5e0C237A0a09b`, using the Creditcoin `0x0FD2`
+  `0x890d6Fdc4aB8B55bA228Fb991257ad2Bac673761`, using the Creditcoin `0x0FD2`
   precompile interface
 
 The dashboard shows honest empty states until a facility opens or a deposit
