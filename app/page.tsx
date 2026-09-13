@@ -11,7 +11,7 @@ const faqs = [
     "Who gets their money back first. If you confirmed first, you get paid first. If you confirmed later, you wait.",
   ],
   [
-    "What stops a bot from taking my place?",
+    "What stops an MEV bot from taking my place?",
     "Once your pay-in confirms, your place is locked. A later send, even with a higher fee, can only stand behind you.",
   ],
   [
@@ -32,17 +32,17 @@ const problemCards = [
   {
     icon: <GridIcon />,
     title: "Pending is public",
-    copy: "Your send sits in a public waiting list before it confirms. A bot can see it.",
+    copy: "Your send sits in a public waiting list before it confirms. An MEV bot can see it.",
   },
   {
     icon: <RelayIcon />,
-    title: "Bot pays more fee",
-    copy: "The bot pays a higher fee, confirms first, and sits at the front of the same loan.",
+    title: "MEV bot pays more fee",
+    copy: "The MEV bot pays a higher fee, confirms first, and sits at the front of the same loan.",
   },
   {
     icon: <ShieldIcon />,
-    title: "Bot is paid first",
-    copy: "When the borrower pays back, first in line is paid first. If the bot confirmed first, the bot is paid first.",
+    title: "MEV bot is paid first",
+    copy: "When the borrower pays back, first in line is paid first. If the MEV bot confirmed first, the MEV bot is paid first.",
   },
 ];
 
@@ -75,7 +75,7 @@ export default function Home() {
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
               This is on-chain lending where more than one wallet can fund the
-              same loan, and if a bot confirms first it takes the first payout,
+              same loan, and if an MEV bot confirms first it takes the first payout,
               so Veridex keeps the line on Creditcoin and a later send cannot
               jump ahead.
             </p>
@@ -100,9 +100,10 @@ export default function Home() {
                 <span className="font-serif font-normal italic text-brand">in the open.</span>
               </h2>
               <p className="mt-6 max-w-xl text-base leading-7 text-mutedForeground">
-                Same loan. Several wallets. The pending send is public. A bot
-                pays a higher fee and confirms first. When the borrower pays
-                the loan back, the bot is paid first. You wait, or you lose.
+                Several wallets fund the same loan, and the pending send is
+                public, so an MEV bot can pay a higher fee and confirm first,
+                and when the borrower pays the loan back the MEV bot is paid
+                first, which means you wait or you lose.
               </p>
             </div>
 
@@ -166,7 +167,7 @@ export default function Home() {
               </p>
               <p>
                 Veridex locks that order on Creditcoin. After your pay-in
-                confirms, a bot cannot step in front of you.
+                confirms, an MEV bot cannot step in front of you.
               </p>
             </div>
             <Link

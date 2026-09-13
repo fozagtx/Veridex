@@ -42,7 +42,7 @@ const steps = [
   {
     number: "03",
     title: "See your place",
-    copy: "Your place locks when the pay-in confirms. A bot cannot jump it.",
+    copy: "Your place locks when the pay-in confirms. An MEV bot cannot jump it.",
     demo: "rank",
   },
   {
@@ -186,7 +186,7 @@ function RankDemo({ playing }: { playing: boolean }) {
             transition={rejected ? { duration: 0.4 } : SPRING_SNAPPY}
           >
             <span className={`truncate font-mono text-[11px] text-mutedForeground ${rejected ? "line-through" : ""}`}>
-              Bot 0x9Ff...7aA
+              MEV bot 0x9Ff...7aA
             </span>
             {rejected ? (
               <span className="ml-auto shrink-0 font-mono text-[10px] uppercase tracking-wide text-destructive">
