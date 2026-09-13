@@ -4,7 +4,7 @@ import { Panel, Shell } from "@/components/Shell";
 const details = [
   ["Chain", "Creditcoin CC3 testnet"],
   ["Token", "CTC"],
-  ["Rule", "First confirmed, first paid"],
+  ["Rule", "The wallet that confirms first is paid first"],
   ["Clearinghouse", "0x7d6803…0048"],
 ];
 

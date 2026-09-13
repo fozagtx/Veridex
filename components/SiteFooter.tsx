@@ -69,7 +69,7 @@ export function SiteFooter() {
       <div className="border-t border-border">
         <div className="page-wrap flex flex-col gap-2 py-4 text-xs text-mutedForeground sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Veridex. Line on Creditcoin CC3.</p>
-          <p className="font-mono">CTC · first confirmed · first paid</p>
+          <p className="font-mono">CTC on Creditcoin</p>
         </div>
       </div>
     </footer>

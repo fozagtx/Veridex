@@ -70,8 +70,9 @@ export default function Home() {
         <div className="page-wrap relative grid min-h-[92vh] items-center gap-12 pb-24 pt-32 sm:pt-36 lg:grid-cols-2 lg:gap-10">
           <div>
             <h1 className="text-5xl font-extrabold leading-[0.98] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              <span className="block">First confirmed.</span>
-              <span className="block font-serif font-normal italic text-brand">First paid.</span>
+              <span className="block">The wallet that</span>
+              <span className="block">confirms first is</span>
+              <span className="block font-serif font-normal italic text-brand">the one that gets paid first.</span>
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
               This is on-chain lending where more than one wallet can fund the
@@ -111,8 +112,9 @@ export default function Home() {
               <Eyebrow>The line</Eyebrow>
               <p className="mt-5 font-serif text-7xl italic leading-none text-brand">#1 gets paid</p>
               <p className="mt-5 text-sm leading-6 text-mutedForeground">
-                Confirm order is the line. First confirmed stays first. First
-                confirmed is paid first.
+                The line is the order in which pay-ins confirm, and the wallet
+                at the front of that line is the first one paid when the
+                borrower pays the loan back.
               </p>
               <div className="mt-7 grid grid-cols-4 gap-2">
                 {["1", "2", "3", "4"].map((position) => {
