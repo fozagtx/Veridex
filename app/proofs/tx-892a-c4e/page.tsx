@@ -2,31 +2,37 @@ import Link from "next/link";
 import { Panel, Shell } from "@/components/Shell";
 
 const details = [
-  ["Block", "Ethereum Sepolia #6,892,104"],
-  ["Deposit position", "3rd in the block"],
-  ["Checked by", "Creditcoin's built-in proof checker"],
-  ["Status", "Locked in, block is final"],
+  ["Chain", "Creditcoin CC3 testnet"],
+  ["Token", "CTC"],
+  ["Rule", "First confirmed, first paid"],
+  ["Clearinghouse", "0x7d6803…0048"],
 ];
 
-export default function ProofInspector() {
+const steps = [
+  ["1", "Pay in", "CTC into the pot. You join the line."],
+  ["2", "Pay the loan back", "Same amount again. You pretend to be the borrower."],
+  ["3", "Get my money back", "First in line is paid. That is you if you confirmed first."],
+];
+
+export default function LineGuide() {
   return (
     <Shell>
       <section className="page-section">
         <div className="page-wrap">
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mutedForeground">
-            Proof inspector / Tx 0x892a...c4e
+            The line
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-extrabold leading-[1.06] text-foreground sm:text-5xl">
-            One deposit. One locked-in place.
+            Same loan. One line. Confirm order wins.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-mutedForeground">
-            This example shows how a deposit's position in its block becomes a
-            permanent place in the repayment line.
+            Several wallets fund the same on-chain loan. Who confirms first
+            gets paid first. A later send cannot cut in.
           </p>
 
           <div className="mt-8 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
             <Panel className="p-6">
-              <h2 className="text-2xl font-bold text-foreground">What was recorded</h2>
+              <h2 className="text-2xl font-bold text-foreground">What is live</h2>
               <dl className="mt-5 space-y-4 text-sm">
                 {details.map(([label, value]) => (
                   <div
@@ -40,49 +46,40 @@ export default function ProofInspector() {
                   </div>
                 ))}
               </dl>
-              <div className="mt-6 rounded-[8px] border border-brand bg-card p-4 font-mono text-sm text-brand">
-                Verified on Creditcoin CC3
-              </div>
+              <a
+                className="mt-6 inline-block rounded-[8px] border border-brand bg-card p-4 font-mono text-sm text-brand"
+                href="https://creditcoin-testnet.blockscout.com/address/0x7d6803Ab43E41963f871cBffFf3F0995d36E0048"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Open the clearinghouse
+              </a>
             </Panel>
 
             <Panel className="p-6">
-              <h2 className="text-2xl font-bold text-foreground">Why it cannot be changed</h2>
+              <h2 className="text-2xl font-bold text-foreground">Three clicks</h2>
               <p className="mt-3 text-base leading-7 text-mutedForeground">
-                Every block has a fingerprint built from all of its
-                transactions in order. This deposit's position is part of that
-                fingerprint. Once the block is final, moving the deposit would
-                change the fingerprint, and the whole chain would reject it.
-                That is why a place in line cannot be swapped, bribed, or
-                reordered.
+                Money does not come back by itself. Step 2 is the payout pot.
+                You play both sides.
               </p>
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {["1", "2", "3", "4"].map((position) => {
-                  const thisOne = position === "3";
-                  return (
-                    <div
-                      key={position}
-                      className={`rounded-[10px] border p-4 text-center ${
-                        thisOne ? "border-brand bg-background" : "border-border bg-muted"
-                      }`}
-                    >
-                      <p className={`font-mono text-2xl ${thisOne ? "text-brand" : "text-foreground"}`}>
-                        #{position}
-                      </p>
-                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.5px] text-mutedForeground">
-                        {thisOne ? "This deposit" : "Taken"}
-                      </p>
+              <ol className="mt-6 space-y-3">
+                {steps.map(([n, title, copy]) => (
+                  <li key={n} className="flex items-start gap-4 rounded-[10px] border border-border bg-background px-5 py-4">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-mono text-xs font-bold text-primaryForeground">
+                      {n}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{title}</p>
+                      <p className="mt-0.5 text-xs text-mutedForeground">{copy}</p>
                     </div>
-                  );
-                })}
-              </div>
-              <div className="mt-6 rounded-[10px] border border-border bg-background p-4 font-mono text-sm text-mutedForeground">
-                Position #3 in block #6,892,104. Final and permanent.
-              </div>
+                  </li>
+                ))}
+              </ol>
               <Link
                 className="mt-6 inline-block text-sm font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-brand"
                 href="/dashboard"
               >
-                Back to clearing room
+                Open the line
               </Link>
             </Panel>
           </div>

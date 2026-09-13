@@ -146,7 +146,7 @@ export function walletErrorMessage(error: unknown): string {
       return "The person in front of you gets paid first.";
     }
     if (text.includes("not paid back enough") || text.includes("has not paid back")) {
-      return "The deal has not paid back enough yet.";
+      return "The loan has not paid back enough yet.";
     }
     if (text.includes("nothing to collect")) {
       return "You have nothing to collect.";

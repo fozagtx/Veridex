@@ -4,13 +4,13 @@ import { VeridexLogo } from "@/components/VeridexLogo";
 const product = [
   ["About", "/#about"],
   ["FAQ", "/#faq"],
-  ["Proof inspector", "/proofs/tx-892a-c4e"],
+  ["The line", "/dashboard"],
 ];
 
 const network = [
-  ["Creditcoin CC3", "Settlement"],
-  ["Ethereum Sepolia", "Deposits"],
-  ["Built-in proof check", "No trusted middleman"],
+  ["Creditcoin CC3", "Line and payout"],
+  ["CTC", "What you send"],
+  ["Clearinghouse", "0x7d6803…0048"],
 ];
 
 export function SiteFooter() {
@@ -24,9 +24,8 @@ export function SiteFooter() {
               <span className="text-base font-bold tracking-tight">Veridex</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-6 text-mutedForeground">
-              Cross-chain repayment order, proven. Your place in the line comes
-              from the confirmed order of deposits, not from whoever relays
-              first.
+              Same on-chain loan. First confirmed, first paid. A bot cannot
+              cut in.
             </p>
           </div>
 
@@ -56,11 +55,11 @@ export function SiteFooter() {
           </div>
 
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-mutedForeground">Clearing rules</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-mutedForeground">The rules</p>
             <ul className="mt-4 grid gap-2.5 text-sm text-mutedForeground">
-              <li>Connect a wallet before facility data appears.</li>
-              <li>Your place follows the confirmed order of deposits.</li>
-              <li>Bot and middleman reordering is rejected.</li>
+              <li>Confirm order is the line.</li>
+              <li>Pay the loan back fills the pot.</li>
+              <li>A confirmed place cannot be jumped.</li>
             </ul>
           </div>
         </div>
@@ -68,8 +67,8 @@ export function SiteFooter() {
 
       <div className="border-t border-border">
         <div className="page-wrap flex flex-col gap-2 py-4 text-xs text-mutedForeground sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Veridex. Clearing on Creditcoin CC3.</p>
-          <p className="font-mono">Sepolia deposits · CC3 settlement</p>
+          <p>© 2026 Veridex. Line on Creditcoin CC3.</p>
+          <p className="font-mono">CTC · first confirmed · first paid</p>
         </div>
       </div>
     </footer>

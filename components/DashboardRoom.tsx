@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 import { DiagramBlock } from "@/components/DashboardDiagrams";
 import { Panel } from "@/components/Shell";
 import { WalletTerminal } from "@/components/WalletTerminal";
-import { formatCtc, readDeal, stillOwed, type DealState } from "@/lib/clearinghouse";
+import { formatCtc, readLoan, stillOwed, type LoanState } from "@/lib/clearinghouse";
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -13,11 +13,11 @@ function shortAddress(address: string) {
 
 export function DashboardRoom() {
   const { address } = useAccount();
-  const [deal, setDeal] = useState<DealState | null>(null);
+  const [loan, setLoan] = useState<LoanState | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      setDeal(await readDeal());
+      setLoan(await readLoan());
     } catch {
       // Keep the last known line if the RPC blips.
     }
@@ -27,8 +27,8 @@ export function DashboardRoom() {
     void refresh();
   }, [refresh, address]);
 
-  const places = deal?.places ?? [];
-  const owed = deal ? stillOwed(deal) : BigInt(0);
+  const places = loan?.places ?? [];
+  const owed = loan ? stillOwed(loan) : BigInt(0);
   const first = places[0];
   const youAreFirst = Boolean(
     first && address && first.funder.toLowerCase() === address.toLowerCase(),
@@ -36,7 +36,7 @@ export function DashboardRoom() {
 
   return (
     <Panel className="p-5 sm:p-6">
-      <WalletTerminal deal={deal} onChanged={() => void refresh()} />
+      <WalletTerminal loan={loan} onChanged={() => void refresh()} />
 
       <div className="mt-5 border-t border-border pt-5">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mutedForeground">
@@ -46,8 +46,8 @@ export function DashboardRoom() {
           {places.length === 0
             ? "Nobody has paid in yet."
             : owed === BigInt(0)
-              ? "The deal has paid back enough. First in line can take their money."
-              : `The deal still needs ${formatCtc(owed)} CTC before the front of the line can get paid.`}
+              ? "The loan has paid back enough. First in line can take their money."
+              : `The loan still needs ${formatCtc(owed)} CTC before the front of the line can get paid.`}
         </p>
         <div className="mt-3 space-y-2">
           {places.length === 0 ? (
@@ -87,7 +87,7 @@ export function DashboardRoom() {
           label="The pot"
           note={
             first
-              ? `${formatCtc(places.reduce((sum, place) => sum + place.amount, BigInt(0)))} CTC paid in. ${formatCtc(deal?.repaid ?? BigInt(0))} CTC paid back.`
+              ? `${formatCtc(places.reduce((sum, place) => sum + place.amount, BigInt(0)))} CTC paid in. ${formatCtc(loan?.repaid ?? BigInt(0))} CTC paid back.`
               : "Empty until someone pays in."
           }
           live={places.length > 0}
@@ -102,7 +102,7 @@ export function DashboardRoom() {
             first?.paidBack
               ? "The person at the front already got paid."
               : first
-                ? "When the deal pays back, #1 is sent CTC first."
+                ? "When the loan pays back, #1 is sent CTC first."
                 : "No line yet."
           }
           live={Boolean(first && !first.paidBack)}

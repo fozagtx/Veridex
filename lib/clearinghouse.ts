@@ -79,7 +79,7 @@ export type LinePlace = {
   paidBack: boolean;
 };
 
-export type DealState = {
+export type LoanState = {
   places: LinePlace[];
   repaid: bigint;
   paidOut: bigint;
@@ -135,7 +135,7 @@ async function call(functionName: "lineSize" | "repaid" | "paidOut" | "unpaidTot
   });
 }
 
-export async function readDeal(): Promise<DealState> {
+export async function readLoan(): Promise<LoanState> {
   const sizeRaw = await call("lineSize", [facilityId]);
   const size = sizeRaw ? Number(sizeRaw) : 0;
   const places: LinePlace[] = [];
@@ -207,9 +207,9 @@ export function explorerTx(hash: string): string {
   return `https://creditcoin-testnet.blockscout.com/tx/${hash}`;
 }
 
-export function stillOwed(deal: DealState): bigint {
-  if (deal.unpaid > deal.repaid - deal.paidOut) {
-    return deal.unpaid - (deal.repaid - deal.paidOut);
+export function stillOwed(loan: LoanState): bigint {
+  if (loan.unpaid > loan.repaid - loan.paidOut) {
+    return loan.unpaid - (loan.repaid - loan.paidOut);
   }
   return BigInt(0);
 }

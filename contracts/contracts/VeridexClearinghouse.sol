@@ -66,7 +66,7 @@ contract VeridexClearinghouse {
                 continue;
             }
             require(places[i].funder == msg.sender, "not your turn");
-            require(available >= places[i].amount, "deal has not paid back enough");
+            require(available >= places[i].amount, "loan has not paid back enough");
 
             places[i].paidBack = true;
             paidOut[tradeId] += places[i].amount;
@@ -107,9 +107,7 @@ contract VeridexClearinghouse {
         require(valid, "invalid proof");
 
         uint32 txIndex = IBlockProver(BLOCK_PROVER).calculateTxIndex(merkleProof);
-        _addPlace(tradeId, funder, amount, blockHeight);
-        // Keep the proof index on the last place for the USC path.
-        line[tradeId][line[tradeId].length - 1].index = txIndex;
+        _insertByConfirmOrder(tradeId, funder, amount, blockHeight, txIndex);
         processedProofs[proofHash] = true;
     }
 
@@ -146,5 +144,42 @@ contract VeridexClearinghouse {
             })
         );
         emit Funded(tradeId, funder, amount, line[tradeId].length - 1);
+    }
+
+    function _insertByConfirmOrder(
+        bytes32 tradeId,
+        address funder,
+        uint256 amount,
+        uint256 blockHeight,
+        uint32 index
+    ) internal {
+        Place[] storage places = line[tradeId];
+        uint256 n = places.length;
+        uint256 at = n;
+        for (uint256 i = 0; i < n; i++) {
+            Place storage current = places[i];
+            if (blockHeight < current.blockHeight || (blockHeight == current.blockHeight && index < current.index)) {
+                at = i;
+                break;
+            }
+        }
+        for (uint256 j = at; j < n; j++) {
+            require(!places[j].paidBack, "cannot cut a paid place");
+        }
+
+        Place memory incoming = Place({
+            funder: funder,
+            amount: amount,
+            blockHeight: blockHeight,
+            index: index,
+            paidBack: false
+        });
+        places.push(incoming);
+        for (uint256 k = n; k > at; k--) {
+            places[k] = places[k - 1];
+        }
+        places[at] = incoming;
+        depositCount += 1;
+        emit Funded(tradeId, funder, amount, at);
     }
 }

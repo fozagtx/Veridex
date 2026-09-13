@@ -8,27 +8,23 @@ import { Shell } from "@/components/Shell";
 const faqs = [
   [
     "What is my place in line?",
-    "Who gets their money back first. If you paid in first, you get paid back first. If you paid in later, you wait. That is the whole idea.",
-  ],
-  [
-    "What does Veridex actually prove?",
-    "The order in which deposits were confirmed. Once a block is final, that order is locked, so no one can rewrite it.",
-  ],
-  [
-    "Which chains are supported?",
-    "You send CTC on Creditcoin CC3. The clearinghouse lives there and keeps the line.",
-  ],
-  [
-    "Do I need to deposit to see my place?",
-    "Yes. After your deposit confirms, the dashboard shows if you are first or waiting behind someone.",
+    "Who gets their money back first. If you confirmed first, you get paid first. If you confirmed later, you wait.",
   ],
   [
     "What stops a bot from taking my place?",
-    "Your place comes from the order the block confirmed, not from who clicks fastest. A copied deposit lands in a later slot, so it cannot take yours.",
+    "Once your pay-in confirms, your place is locked. A later send, even with a higher fee, can only stand behind you.",
   ],
   [
-    "What does preparing a deposit do?",
-    "It opens MetaMask so you can send CTC to the clearinghouse. Nothing moves until you confirm in your wallet.",
+    "Why do I pay the loan back?",
+    "Money does not come back by itself. Pay the loan back fills the pot. You pretend to be the borrower. No pot, nobody gets paid.",
+  ],
+  [
+    "Which chain is this?",
+    "Creditcoin CC3. You send CTC. The line and the payout live there.",
+  ],
+  [
+    "Do I need to pay in to see my place?",
+    "Yes. After your pay-in confirms, the dashboard shows if you are first or waiting.",
   ],
 ];
 
@@ -36,17 +32,17 @@ const problemCards = [
   {
     icon: <GridIcon />,
     title: "Pending is public",
-    copy: "Every deposit waiting to confirm is visible to bots before it lands.",
+    copy: "Your send sits in a public waiting list before it confirms. A bot can see it.",
   },
   {
     icon: <RelayIcon />,
-    title: "Middleman discretion",
-    copy: "Deposits moving between chains pass through middlemen who can reorder them.",
+    title: "Bot pays more fee",
+    copy: "The bot pays a higher fee, confirms first, and sits at the front of the same loan.",
   },
   {
     icon: <ShieldIcon />,
-    title: "Lost priority",
-    copy: "The wallet that paid in first can end up last in line.",
+    title: "Bot is paid first",
+    copy: "When the borrower pays back, first in line is paid first. If the bot confirmed first, the bot is paid first.",
   },
 ];
 
@@ -66,7 +62,6 @@ function Eyebrow({ children }: { children: string }) {
 export default function Home() {
   return (
     <Shell>
-      {/* Hero — full-bleed waves under the floating header */}
       <section className="relative -mt-16 overflow-hidden">
         <div className="absolute inset-0" aria-hidden="true">
           <HeroWaves className="absolute inset-0 h-full w-full" />
@@ -75,20 +70,18 @@ export default function Home() {
         <div className="page-wrap relative grid min-h-[92vh] items-center gap-12 pb-24 pt-32 sm:pt-36 lg:grid-cols-2 lg:gap-10">
           <div>
             <h1 className="text-5xl font-extrabold leading-[0.98] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              <span className="block">Stop bots from</span>
-              <span className="block">jumping ahead in</span>
-              <span className="block font-serif font-normal italic text-brand">the repayment line.</span>
+              <span className="block">First confirmed.</span>
+              <span className="block font-serif font-normal italic text-brand">First paid.</span>
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
-              When several lenders fund the same deal, automated bots try to
-              jump ahead in the repayment line. Veridex proves who paid in
-              first and locks that order for good. Connect a wallet to see
-              your place before you send money.
+              Several wallets fund the same on-chain loan. A bot can confirm
+              first and take first payout. Veridex locks the line on
+              Creditcoin. A bot cannot cut in.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />
-              <Link href="/proofs/tx-892a-c4e" className={pillSecondary}>
-                Inspect a proof
+              <Link href="/dashboard" className={pillSecondary}>
+                Open the line
               </Link>
             </div>
           </div>
@@ -96,38 +89,32 @@ export default function Home() {
         </div>
       </section>
 
-      {/* The problem */}
       <section className="py-24 sm:py-32">
         <div className="page-wrap">
           <div className="grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
               <Eyebrow>The problem</Eyebrow>
               <h2 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Every public deal is{" "}
-                <span className="font-serif font-normal italic text-brand">leaking priority.</span>
+                Your pending send sits{" "}
+                <span className="font-serif font-normal italic text-brand">in the open.</span>
               </h2>
               <p className="mt-6 max-w-xl text-base leading-7 text-mutedForeground">
-                When several wallets fund the same deal, only one is first in
-                line. Today that order is decided by whoever relays fastest,
-                not by who paid in first. Bots watch the public queue of
-                pending deposits, copy yours, and jump ahead. Veridex locks
-                the order the moment your deposit confirms, so your place
-                cannot be bought after the fact.
+                Same loan. Several wallets. The pending send is public. A bot
+                pays a higher fee and confirms first. When the borrower pays
+                the loan back, the bot is paid first. You wait, or you lose.
               </p>
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-8">
-              <Eyebrow>Proof in plain terms</Eyebrow>
-              <p className="mt-5 font-serif text-7xl italic leading-none text-brand">#3 in line</p>
+              <Eyebrow>The line</Eyebrow>
+              <p className="mt-5 font-serif text-7xl italic leading-none text-brand">#1 gets paid</p>
               <p className="mt-5 text-sm leading-6 text-mutedForeground">
-                When your deposit confirms, it takes one exact slot in the
-                block, like a numbered ticket at a counter. After finality,
-                that ticket cannot be swapped, bribed, or reordered. That
-                number is your place in the repayment line.
+                Confirm order is the line. First confirmed stays first. First
+                confirmed is paid first.
               </p>
               <div className="mt-7 grid grid-cols-4 gap-2">
                 {["1", "2", "3", "4"].map((position) => {
-                  const you = position === "3";
+                  const you = position === "1";
                   return (
                     <div
                       key={position}
@@ -139,7 +126,7 @@ export default function Home() {
                         #{position}
                       </p>
                       <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.5px] text-mutedForeground">
-                        {you ? "You" : "Taken"}
+                        {you ? "You" : "Waits"}
                       </p>
                     </div>
                   );
@@ -162,7 +149,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Place in line */}
       <section id="about" className="scroll-mt-20 border-t border-border py-24 sm:py-32">
         <div className="page-wrap grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
@@ -173,20 +159,20 @@ export default function Home() {
             </h2>
             <div className="mt-6 space-y-4 text-base leading-7 text-mutedForeground">
               <p>
-                Several people can fund the same deal. They line up to get
-                their money back. Whoever paid in first gets paid back first.
-                Whoever paid in later waits.
+                Several wallets fund the same on-chain loan. They line up to
+                get paid back. Whoever confirmed first gets paid first.
+                Whoever confirmed later waits.
               </p>
               <p>
-                Veridex locks that order when the deposit confirms. After
-                that, no bot or middleman can step in front of you.
+                Veridex locks that order on Creditcoin. After your pay-in
+                confirms, a bot cannot step in front of you.
               </p>
             </div>
             <Link
-              href="/proofs/tx-892a-c4e"
+              href="/dashboard"
               className="mt-7 inline-block text-sm font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-brand"
             >
-              Inspect a proof
+              Open the line
             </Link>
           </div>
 
@@ -201,7 +187,7 @@ export default function Home() {
                   <p className="text-sm font-semibold text-foreground">First in line</p>
                   <p className="mt-0.5 text-xs text-mutedForeground">Gets money back first</p>
                 </div>
-                <span className="font-mono text-sm text-mutedForeground">Safer</span>
+                <span className="font-mono text-sm text-mutedForeground">Paid first</span>
               </li>
               <li className="flex items-center gap-4 rounded-[10px] border border-border bg-background px-5 py-4">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border font-mono text-xs text-mutedForeground">
@@ -215,8 +201,8 @@ export default function Home() {
               </li>
             </ol>
             <p className="mt-6 border-t border-border pt-5 text-xs leading-5 text-mutedForeground">
-              If the deal loses money, the people at the back of the line
-              lose first. The person at the front is covered first.
+              If the pot is short, the back of the line waits. The front is
+              paid first.
             </p>
           </div>
         </div>
@@ -224,7 +210,6 @@ export default function Home() {
 
       <ProtocolGrid />
 
-      {/* FAQ */}
       <section id="faq" className="scroll-mt-20 border-t border-border py-24 sm:py-32">
         <div className="page-wrap grid items-start gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
           <div>
@@ -252,15 +237,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="border-t border-border py-28 sm:py-36">
         <div className="page-wrap text-center">
           <h2 className="mx-auto max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-6xl">
-            See your place{" "}
-            <span className="font-serif font-normal italic text-brand">after you pay in.</span>
+            Pay in. Pay it back.{" "}
+            <span className="font-serif font-normal italic text-brand">Get paid.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-mutedForeground">
-            Connect, send CTC, and the line shows who gets paid back first.
+            Connect, send CTC, and the line shows who gets paid first.
           </p>
           <ConnectWalletButton className={`mt-10 ${pillPrimary}`} />
         </div>

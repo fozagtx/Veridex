@@ -11,7 +11,7 @@ import {
   formatCtc,
   stillOwed,
   waitForTransaction,
-  type DealState,
+  type LoanState,
 } from "@/lib/clearinghouse";
 import {
   creditcoinId,
@@ -50,10 +50,10 @@ function swapText(el: HTMLElement | null, next: string) {
 }
 
 export function WalletTerminal({
-  deal,
+  loan,
   onChanged,
 }: {
-  deal: DealState | null;
+  loan: LoanState | null;
   onChanged?: () => void;
 }) {
   const [amount, setAmount] = useState("0.01");
@@ -73,15 +73,15 @@ export function WalletTerminal({
   const { address, isConnected } = useAccount();
   const onCreditcoin = walletChainId === creditcoinId;
   const canSendAmount = Boolean(isConnected && address && Number(amount) > 0);
-  const nextUnpaid = deal?.places.find((place) => !place.paidBack) ?? null;
+  const nextUnpaid = loan?.places.find((place) => !place.paidBack) ?? null;
   const yourTurn = Boolean(
     address && nextUnpaid && nextUnpaid.funder.toLowerCase() === address.toLowerCase(),
   );
   const youGotPaid = Boolean(
-    address && deal?.places.some((place) => place.funder.toLowerCase() === address.toLowerCase() && place.paidBack),
+    address && loan?.places.some((place) => place.funder.toLowerCase() === address.toLowerCase() && place.paidBack),
   );
-  const owed = deal ? stillOwed(deal) : BigInt(0);
-  const dealPaidEnough = Boolean(nextUnpaid && owed === BigInt(0));
+  const owed = loan ? stillOwed(loan) : BigInt(0);
+  const loanPaidEnough = Boolean(nextUnpaid && owed === BigInt(0));
 
   function ms(name: string, fallback: number) {
     const value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
@@ -169,12 +169,12 @@ export function WalletTerminal({
       setStatus("You already got your money back.");
       return;
     }
-    if (yourTurn && dealPaidEnough) {
-      setStatus("The deal paid back. Get your money now.");
+    if (yourTurn && loanPaidEnough) {
+      setStatus("The loan paid back. Get your money now.");
       return;
     }
     if (nextUnpaid && yourTurn) {
-      setStatus(`You are first in line. The deal still owes ${formatCtc(owed)} CTC.`);
+      setStatus(`You are first in line. The loan still owes ${formatCtc(owed)} CTC.`);
       return;
     }
     if (nextUnpaid) {
@@ -182,7 +182,7 @@ export function WalletTerminal({
       return;
     }
     setStatus(`Connected as ${shortAddress(address)}. Pay in to join the line.`);
-  }, [isConnected, address, youGotPaid, nextUnpaid, yourTurn, dealPaidEnough, owed]);
+  }, [isConnected, address, youGotPaid, nextUnpaid, yourTurn, loanPaidEnough, owed]);
 
   useEffect(() => {
     return () => {
@@ -255,11 +255,11 @@ export function WalletTerminal({
     if (!value || !address) {
       return;
     }
-    if (!deal?.places.length) {
+    if (!loan?.places.length) {
       showError("Nobody has paid in yet.");
       return;
     }
-    await run("pay the deal back", () => sendClearinghouseRepay(address, value));
+    await run("pay the loan back", () => sendClearinghouseRepay(address, value));
   }
 
   async function collect() {
@@ -330,22 +330,22 @@ export function WalletTerminal({
           <button
             type="button"
             className="rounded-[8px] border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canSendAmount || isWorking || !deal?.places.length}
+            disabled={!canSendAmount || isWorking || !loan?.places.length}
             onClick={() => void payDealBack()}
           >
-            Pay the deal back
+            Pay the loan back
           </button>
           <button
             type="button"
             className="rounded-[8px] bg-brand px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brandDark disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!address || isWorking || !yourTurn || !dealPaidEnough}
+            disabled={!address || isWorking || !yourTurn || !loanPaidEnough}
             onClick={() => void collect()}
           >
             Get my money back
           </button>
         </div>
         <p className="t-error-msg mt-2 text-xs text-destructive">
-          {error || "Pay in puts money in the pot. Pay the deal back fills the pot. First in line gets paid first."}
+          {error || "Pay in puts money in the pot. Pay the loan back fills the pot. First in line gets paid first."}
         </p>
       </div>
 
@@ -374,10 +374,10 @@ export function WalletGate({ children }: { children: ReactNode }) {
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mutedForeground">Wallet required</p>
         <h2 className="mt-2 text-xl font-bold text-foreground">
-          Connect a wallet to enter the deal.
+          Connect a wallet to join the loan.
         </h2>
         <p className="mt-2 max-w-lg text-sm leading-6 text-mutedForeground">
-          Pay in, pay the deal back, then the first person in line gets their
+          Pay in, pay the loan back, then the first person in line gets their
           money back first.
         </p>
         <ConnectWalletButton className="mt-5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brandDark" />

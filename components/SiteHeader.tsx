@@ -9,6 +9,7 @@ import { VeridexLogo } from "@/components/VeridexLogo";
 const links = [
   { href: "/#about", label: "About" },
   { href: "/#faq", label: "FAQ" },
+  { href: "/dashboard", label: "The line" },
 ];
 
 export function SiteHeader() {

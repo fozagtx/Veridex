@@ -7,9 +7,9 @@ import { GlobeIcon, GridIcon, KeyIcon, ShieldIcon } from "@/components/Icons";
 /*
  * Storyboard (times within each loop cycle)
  * 01 Connect   period 4.4s: idle pill 0-2.2s → connected chip 2.2-4.4s → repeat
- * 02 Facility  period 4.8s: selection ring walks rows 0 → 1 → 2, 1.6s per hop
- * 03 Rank      period 5.6s: stable 0-1.4s → MEV chip enters → rejected shake → exits → stable
- * 04 Fund      period 4.8s: prepare chip 0-2.4s → ready state 2.4-4.8s → repeat
+ * 02 Same loan period 4.8s: selection ring walks wallets 0 → 1 → 2, 1.6s per hop
+ * 03 Line      period 5.6s: stable 0-1.4s → bot chip enters → rejected shake → exits → stable
+ * 04 Pay in    period 4.8s: pay-in chip 0-2.4s → paid-in state 2.4-4.8s → repeat
  * Card entrance on scroll: y 24 → 0, opacity 0 → 1, delay i * 0.12s, spring 280/26, once.
  * Loops only run while the section is in view and motion is not reduced.
  */
@@ -18,7 +18,7 @@ const TIMING = {
   entranceStagger: 0.12,
   entranceOffsetY: 24,
   connectToggleMs: 2200,
-  facilityStepMs: 1600,
+  loanStepMs: 1600,
   rankPhaseMs: 1400,
   fundToggleMs: 2400,
 };
@@ -30,55 +30,55 @@ const steps = [
   {
     number: "01",
     title: "Connect a wallet",
-    copy: "Facility terms and queue data only appear for connected wallets.",
+    copy: "The line only appears after a wallet connects.",
     demo: "connect",
   },
   {
     number: "02",
-    title: "Choose a facility",
-    copy: "Review the terms, the returns, and where the money goes before you commit.",
-    demo: "facility",
+    title: "Same loan",
+    copy: "Several wallets fund one on-chain loan. They stand in one line.",
+    demo: "loan",
   },
   {
     number: "03",
     title: "See your place",
-    copy: "Your place in line is locked when the deposit confirms, so nobody can jump ahead.",
+    copy: "Your place locks when the pay-in confirms. A bot cannot jump it.",
     demo: "rank",
   },
   {
     number: "04",
     title: "Pay in",
-    copy: "Send CTC to the clearinghouse. Nothing moves until you confirm in your wallet.",
+    copy: "Send CTC to the clearinghouse. Nothing moves until you confirm.",
     demo: "fund",
   },
 ] as const;
 
-const facilities = [
-  ["#GH-2026-089", "Cocoa"],
-  ["#KE-2026-014", "Tea"],
-  ["#NG-2026-031", "Sesame"],
+const wallets = [
+  ["0xA4f...91B", "You"],
+  ["0x3Ec...402", "Next"],
+  ["0x9C1...6d2", "Waits"],
 ] as const;
 
 const protocol = [
   {
     icon: <GridIcon />,
-    title: "Locked by the block",
-    copy: "Your position becomes part of the block's math at finality. No ordering games after that.",
+    title: "Confirm order is the line",
+    copy: "Who confirms first keeps first place. Later sends append. They cannot move ahead.",
   },
   {
     icon: <KeyIcon />,
-    title: "Connect before data",
-    copy: "Facility terms and queue position stay hidden until a wallet connects.",
+    title: "Connect to see the line",
+    copy: "The live line stays hidden until a wallet connects.",
   },
   {
     icon: <GlobeIcon />,
-    title: "Confirmation first",
-    copy: "Your position is read from confirmed blocks, never from middleman messages.",
+    title: "Lives on Creditcoin",
+    copy: "The line and the payout live on the same chain. You send CTC.",
   },
   {
     icon: <ShieldIcon />,
-    title: "Independently checked",
-    copy: "Every proof is verified by Creditcoin's built-in checker, not by Veridex itself.",
+    title: "Pay-back fills the pot",
+    copy: "Money does not come back by itself. Step 2 is required. Then first in line is paid.",
   },
 ];
 
@@ -124,27 +124,27 @@ function ConnectDemo({ playing }: { playing: boolean }) {
   );
 }
 
-function FacilityDemo({ playing }: { playing: boolean }) {
+function LoanDemo({ playing }: { playing: boolean }) {
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
     if (!playing) return;
     const id = window.setInterval(
-      () => setSelected((index) => (index + 1) % facilities.length),
-      TIMING.facilityStepMs,
+      () => setSelected((index) => (index + 1) % wallets.length),
+      TIMING.loanStepMs,
     );
     return () => window.clearInterval(id);
   }, [playing]);
 
   return (
     <div className="flex h-full flex-col justify-center gap-1.5">
-      {facilities.map(([id, meta], index) => {
+      {wallets.map(([id, meta], index) => {
         const active = index === selected;
         return (
           <div key={id} className="relative flex items-center gap-2 rounded-[8px] px-2.5 py-1.5">
             {active ? (
               <motion.span
-                layoutId="facility-ring"
+                layoutId="loan-ring"
                 transition={SPRING_SNAPPY}
                 className="pointer-events-none absolute inset-0 rounded-[8px] border border-brand bg-card"
               />
@@ -176,7 +176,7 @@ function RankDemo({ playing }: { playing: boolean }) {
       <AnimatePresence>
         {intruderVisible ? (
           <motion.div
-            key="mev-intruder"
+            key="bot-intruder"
             className={`flex items-center gap-2 rounded-[8px] border px-2.5 py-1.5 ${
               rejected ? "border-destructive bg-card" : "border-dashed border-border bg-card"
             }`}
@@ -227,7 +227,7 @@ function FundDemo({ playing }: { playing: boolean }) {
   return (
     <div className="flex h-full flex-col justify-center gap-2">
       <div className="rounded-[6px] border border-border bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground">
-        250,000 USDC
+        1.00 CTC
       </div>
       <AnimatePresence mode="wait" initial={false}>
         {ready ? (
@@ -242,7 +242,7 @@ function FundDemo({ playing }: { playing: boolean }) {
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M2.5 6.5 5 9l4.5-5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Ready to fund
+            Paid in
           </motion.div>
         ) : (
           <motion.div
@@ -253,7 +253,7 @@ function FundDemo({ playing }: { playing: boolean }) {
             exit={{ opacity: 0, y: -4 }}
             transition={SPRING_SNAPPY}
           >
-            Prepare deposit
+            Pay in
           </motion.div>
         )}
       </AnimatePresence>
@@ -263,7 +263,7 @@ function FundDemo({ playing }: { playing: boolean }) {
 
 const demos = {
   connect: ConnectDemo,
-  facility: FacilityDemo,
+  loan: LoanDemo,
   rank: RankDemo,
   fund: FundDemo,
 } as const;

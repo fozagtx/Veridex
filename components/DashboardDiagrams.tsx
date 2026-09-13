@@ -48,7 +48,7 @@ export function TrancheDiagram({ youAreFirst = false }: { youAreFirst?: boolean 
       </div>
       <div className="flex items-center justify-between rounded-[6px] border border-border bg-card px-3 py-2">
         <span className="text-xs font-semibold text-foreground">#2 in line</span>
-        <span className="font-mono text-[10px] text-mutedForeground">repaid after, earns more</span>
+        <span className="font-mono text-[10px] text-mutedForeground">waits</span>
       </div>
     </div>
   );

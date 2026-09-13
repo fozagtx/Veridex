@@ -3,17 +3,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider } from "connectkit";
 import { useState, type ReactNode } from "react";
-import { creditCoin3Testnet, hardhat, sepolia } from "viem/chains";
+import { creditCoin3Testnet, hardhat } from "viem/chains";
 import { createConfig, http, WagmiProvider } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { veridexConfig } from "@/veridex.config";
 
 const config = createConfig({
-  chains: [sepolia, creditCoin3Testnet, hardhat],
+  chains: [creditCoin3Testnet, hardhat],
   connectors: [injected()],
   ssr: true,
   transports: {
-    [sepolia.id]: http(veridexConfig.chains.sepolia.rpcUrl),
     [creditCoin3Testnet.id]: http(veridexConfig.chains.creditcoinTestnet.rpcUrl),
     [hardhat.id]: http(veridexConfig.chains.hardhat.rpcUrl),
   },
