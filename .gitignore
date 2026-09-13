@@ -1,0 +1,17 @@
+**/node_modules/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/artifacts/
+contracts/typechain-types/
+**/.env
+**/.env.local
+**/.env.*.local
+**/.next/
+**/*.tsbuildinfo
+.DS_Store
+
+# Agent tooling (local, not product)
+.agents/
+.serena/
+skills-lock.json
