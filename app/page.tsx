@@ -8,11 +8,11 @@ import { Shell } from "@/components/Shell";
 const faqs = [
   [
     "What is my place in line?",
-    "Who gets their money back first. If you confirmed first, you get paid first. If you confirmed later, you wait.",
+    "Who gets their money back first. If your money went through first, you get paid first. If it went through later, you wait.",
   ],
   [
     "What stops an MEV bot from taking my place?",
-    "Once your pay-in confirms, your place is locked. A later send, even with a higher fee, can only stand behind you.",
+    "Once your pay-in has gone through, your place is locked. A later send, even with a higher fee, can only stand behind you.",
   ],
   [
     "Why do I pay the loan back?",
@@ -24,7 +24,7 @@ const faqs = [
   ],
   [
     "Do I need to pay in to see my place?",
-    "Yes. After your pay-in confirms, the dashboard shows if you are first or waiting.",
+    "Yes. After your pay-in has gone through, the dashboard shows if you are first or waiting.",
   ],
 ];
 
@@ -42,7 +42,7 @@ const problemCards = [
   {
     icon: <ShieldIcon />,
     title: "Payout follows that slot",
-    copy: "When the borrower pays CTC back, the front of the line is paid, so the bot takes your money if it confirmed first.",
+    copy: "When the borrower pays CTC back, the front of the line is paid, so the bot takes your money if its payment went through first.",
   },
 ];
 
@@ -67,8 +67,8 @@ export default function Home() {
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
               Several wallets can fund the same loan on Creditcoin, and if an
-              MEV bot confirms first it gets paid first, so Veridex locks the
-              line.
+              MEV bot's money goes through first it gets paid first, so Veridex
+              locks the line.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />
@@ -90,13 +90,13 @@ export default function Home() {
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-mutedForeground">
                 You and other wallets put CTC into one loan. Your pay-in sits
-                in the open until it confirms, so an MEV bot can outbid you,
-                land first, and collect first when the borrower pays back.
+                in the open until it goes through, so an MEV bot can outbid you,
+                get in first, and collect first when the borrower pays back.
               </p>
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-8">
-              <p className="text-sm font-semibold text-foreground">A line after two confirms</p>
+              <p className="text-sm font-semibold text-foreground">A line after two pay-ins</p>
               <ol className="mt-5 space-y-3 font-mono text-sm">
                 <li className="flex items-center justify-between rounded-[10px] border border-brand bg-background px-4 py-3">
                   <span className="text-brand">#1  0xA4f…91B</span>
@@ -141,8 +141,8 @@ export default function Home() {
               <p className="font-mono text-xs text-mutedForeground">01</p>
               <p className="mt-2 text-lg font-semibold text-foreground">Pay in</p>
               <p className="mt-2 text-sm leading-6 text-mutedForeground">
-                Send CTC to the clearinghouse. After it confirms you stand in
-                line.
+                Send CTC to the clearinghouse. After it goes through you stand
+                in line.
               </p>
             </li>
             <li className="border-t border-border pt-4">

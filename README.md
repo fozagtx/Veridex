@@ -4,19 +4,19 @@
 
 # Veridex
 
-Veridex is on-chain lending where more than one wallet can fund the same loan, and when the borrower pays it back the wallet that confirmed first is paid first, so an MEV bot cannot jump the line.
+Veridex is on-chain lending where more than one wallet can fund the same loan, and when the borrower pays it back the wallet whose money went through first is paid first, so an MEV bot cannot jump the line.
 
 ## What is it?
 
-This is a loan on Creditcoin that several wallets fund with CTC, and before a send confirms it sits in public, so an MEV bot can see it, pay a higher fee, and confirm first.
+This is a loan on Creditcoin that several wallets fund with CTC, and before the payment goes through it sits in public, so an MEV bot can see it, pay a higher fee, and get its money in first.
 
-When the borrower pays the loan back, the first wallet in line is paid first, and if the MEV bot confirmed first then the MEV bot is paid first, which means you wait or you lose.
+When the borrower pays the loan back, the first wallet in line is paid first, and if the MEV bot's money went through first then the MEV bot is paid first, which means you wait or you lose.
 
-Veridex keeps the line in confirm order on Creditcoin, so once your pay-in confirms a later send cannot move in front of you.
+Veridex keeps the line in the order the money went through on Creditcoin, so once your pay-in has gone through a later send cannot move in front of you.
 
 The working parts:
 
-- **Line** — wallets that funded the loan, in confirm order. Required.
+- **Line** — wallets that funded the loan, in the order the money went through. Required.
 - **Payout pot** — CTC the borrower pays back. Required. No pot, nobody gets paid.
 - **Clearinghouse** — the contract that keeps the line and pays it out. Required. Lives on Creditcoin.
 - **Dashboard** — pay in, pay the loan back, get your money back. Required.
@@ -25,11 +25,11 @@ The working parts:
 
 Veridex is a Universal Smart Contract on Creditcoin: the clearinghouse lives on CC3 and uses Creditcoin's Native Query Verifier Precompile at `0x0FD2` to check that a pay-in happened on another chain before that wallet is given a place in the loan line.
 
-`processCapitalLock` sends the source-chain key, block height, encoded transaction, Merkle proof, and continuity proof to `0x0FD2`, and it only continues if the precompile says the proof is valid. The same precompile then returns the transaction index in that block, and Veridex inserts the wallet into the line by block height and that index, so confirm order on the source chain is the payout order on Creditcoin, not who submitted the proof first.
+`processCapitalLock` sends the source-chain key, block height, encoded transaction, Merkle proof, and continuity proof to `0x0FD2`, and it only continues if the precompile says the proof is valid. The same precompile then returns the transaction index in that block, and Veridex inserts the wallet into the line by block height and that index, so the order the money went through on the source chain is the payout order on Creditcoin, not who submitted the proof first.
 
 A proof is stored so it cannot be used twice. Once the place is locked, payout is the same as a CTC pay-in: the borrower pays the loan back into the pot, and the first unpaid place in the line is paid first.
 
-The clickable loop on the dashboard is `fund`, `repay`, and `getPaidBack` with CTC on Creditcoin, which is the same line and the same payout rule. USC is how a deposit that confirmed on another chain can join that line without an MEV bot jumping it by racing the proof.
+The clickable loop on the dashboard is `fund`, `repay`, and `getPaidBack` with CTC on Creditcoin, which is the same line and the same payout rule. USC is how a pay-in that already went through on another chain can join that line without an MEV bot jumping it by racing the proof.
 
 ## How it works
 
@@ -40,7 +40,7 @@ The clickable loop on the dashboard is `fund`, `repay`, and `getPaidBack` with C
      pending send is public
               |
               v
-     first confirm wins the place
+     first payment that goes through wins the place
               |
               v
         borrower pays back
@@ -63,12 +63,12 @@ Wallet
 
 ## Why use it?
 
-- The line is confirm order, not fee order.
-- An MEV bot cannot jump a confirmed place.
+- The line is who paid first, not who paid the most fee.
+- An MEV bot cannot jump a place after the money has gone through.
 - The line and the payout live on the same chain.
 - One wallet can prove the loop in three clicks.
 
-This is the working line. A cut of each loan comes later. Results on testnet depend on CTC in the wallet, a confirmed pay-in, and a confirmed pay-back. Those are not guarantees.
+This is the working line. A cut of each loan comes later. Results on testnet depend on CTC in the wallet, a pay-in that went through, and a pay-back that went through. Those are not guarantees.
 
 ## Live
 

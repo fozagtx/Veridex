@@ -42,13 +42,13 @@ const steps = [
   {
     number: "03",
     title: "See your place",
-    copy: "The dashboard reads the line from the clearinghouse after your tx confirms.",
+    copy: "The dashboard reads the line from the clearinghouse after your pay-in goes through.",
     demo: "rank",
   },
   {
     number: "04",
     title: "Pay in",
-    copy: "Send CTC to the clearinghouse. Nothing moves until you confirm.",
+    copy: "Send CTC to the clearinghouse. Nothing moves until you approve it in your wallet.",
     demo: "fund",
   },
 ] as const;
@@ -63,7 +63,7 @@ const protocol = [
   {
     icon: <GridIcon />,
     title: "fund()",
-    copy: "A confirmed CTC send appends your wallet to the loan line. Later fund calls cannot move ahead of you.",
+    copy: "After your CTC pay-in goes through, your wallet is added to the loan line. Later pay-ins cannot move ahead of you.",
   },
   {
     icon: <KeyIcon />,

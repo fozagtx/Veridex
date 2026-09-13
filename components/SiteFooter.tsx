@@ -25,8 +25,8 @@ export function SiteFooter() {
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-6 text-mutedForeground">
               On-chain lending where several wallets fund the same loan, and
-              the one that confirmed first is paid first, so an MEV bot cannot jump
-              the line.
+              the one whose money went through first is paid first, so an MEV
+              bot cannot jump the line.
             </p>
           </div>
 
@@ -60,7 +60,7 @@ export function SiteFooter() {
             <ul className="mt-4 grid gap-2.5 text-sm text-mutedForeground">
               <li>Confirm order is the line.</li>
               <li>Pay the loan back fills the pot.</li>
-              <li>A confirmed place cannot be jumped.</li>
+              <li>After the money has gone through, that place cannot be jumped.</li>
             </ul>
           </div>
         </div>

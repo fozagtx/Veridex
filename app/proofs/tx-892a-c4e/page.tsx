@@ -4,14 +4,14 @@ import { Panel, Shell } from "@/components/Shell";
 const details = [
   ["Chain", "Creditcoin CC3 testnet"],
   ["Token", "CTC"],
-  ["Rule", "The wallet that confirms first is paid first"],
+  ["Rule", "Whose money went through first is paid first"],
   ["Clearinghouse", "0x7d6803…0048"],
 ];
 
 const steps = [
   ["1", "Pay in", "CTC into the pot. You join the line."],
   ["2", "Pay the loan back", "Same amount again. You pretend to be the borrower."],
-  ["3", "Get my money back", "First in line is paid. That is you if you confirmed first."],
+  ["3", "Get my money back", "First in line is paid. That is you if your money went through first."],
 ];
 
 export default function LineGuide() {
@@ -23,11 +23,11 @@ export default function LineGuide() {
             The line
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-extrabold leading-[1.06] text-foreground sm:text-5xl">
-            Same loan. One line. Confirm order wins.
+            Same loan, one line, first money through is paid first
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-mutedForeground">
-            Several wallets fund the same on-chain loan. Who confirms first
-            gets paid first. A later send cannot cut in.
+            Several wallets fund the same on-chain loan. Whose money went
+            through first gets paid first, and a later send cannot cut in.
           </p>
 
           <div className="mt-8 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
