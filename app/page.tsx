@@ -66,14 +66,15 @@ export default function Home() {
               <span className="block font-serif font-normal italic text-brand">cannot jump this loan.</span>
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
-              Several wallets can fund the same loan on Creditcoin, and if an
-              MEV bot's money goes through first it gets paid first, so Veridex
-              locks the line.
+              More than one wallet can put CTC into the same loan. The first
+              payment that goes through is the first one paid back. Veridex
+              stops an MEV bot from cutting in after your money has gone
+              through.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />
               <Link href="/dashboard" className={pillSecondary}>
-                Open the line
+                Open the dashboard
               </Link>
             </div>
           </div>
