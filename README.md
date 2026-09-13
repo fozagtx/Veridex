@@ -21,6 +21,16 @@ The working parts:
 - **Clearinghouse** — the contract that keeps the line and pays it out. Required. Lives on Creditcoin.
 - **Dashboard** — pay in, pay the loan back, get your money back. Required.
 
+## USC Integration Summary
+
+Veridex is a Universal Smart Contract on Creditcoin: the clearinghouse lives on CC3 and uses Creditcoin's Native Query Verifier Precompile at `0x0FD2` to check that a pay-in happened on another chain before that wallet is given a place in the loan line.
+
+`processCapitalLock` sends the source-chain key, block height, encoded transaction, Merkle proof, and continuity proof to `0x0FD2`, and it only continues if the precompile says the proof is valid. The same precompile then returns the transaction index in that block, and Veridex inserts the wallet into the line by block height and that index, so confirm order on the source chain is the payout order on Creditcoin, not who submitted the proof first.
+
+A proof is stored so it cannot be used twice. Once the place is locked, payout is the same as a CTC pay-in: the borrower pays the loan back into the pot, and the first unpaid place in the line is paid first.
+
+The clickable loop on the dashboard is `fund`, `repay`, and `getPaidBack` with CTC on Creditcoin, which is the same line and the same payout rule. USC is how a deposit that confirmed on another chain can join that line without an MEV bot jumping it by racing the proof.
+
 ## How it works
 
 ```text
