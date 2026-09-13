@@ -63,7 +63,7 @@ export default function Home() {
           <div>
             <h1 className="text-5xl font-extrabold leading-[0.98] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
               <span className="block">Loans</span>
-              <span className="block font-serif font-normal italic text-brand">MEV bots cannot speedrun.</span>
+              <span className="block font-serif font-normal italic text-brand">MEV bots cannot speedrun</span>
             </h1>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />
