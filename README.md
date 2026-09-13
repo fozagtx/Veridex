@@ -4,49 +4,57 @@
 
 # Veridex
 
-Veridex stops bots from jumping ahead in the repayment line for cross-chain
-trade finance. When several lenders fund the same deal, Veridex proves who
-paid in first and locks that order with the block itself, so no bot or
-middleman can reorder it afterwards.
+Veridex is for trade deals where more than one person puts money in. When
+the deal pays back, the person who paid first gets paid first. A bot cannot
+jump the line.
+
+Today the line can get reordered. The wallet that paid first can end up
+last. Veridex locks the order on Creditcoin so that cannot happen.
+
+## How to explain it
+
+**What it is.** Veridex is for trade deals where more than one person puts
+money in. When the deal pays back, the person who paid first gets paid
+first. A bot cannot jump the line.
+
+**Why that matters.** Today the line can get reordered. The wallet that
+paid first can end up last. We lock the order on Creditcoin so that cannot
+happen.
+
+**What you show.** I pay in. I am first in line. I pay the deal back. I get
+my money back. If someone else had paid after me, they would wait.
+
+**Why Creditcoin.** The clearinghouse lives on Creditcoin. That is where
+the line is kept and where payout happens.
+
+**If they ask about USC / proofs.** Creditcoin can also check a deposit
+that happened on another chain. Same rule: first confirmed, first paid.
+
+**If they ask what you make.** A cut of each deal, later. This is the
+working line.
 
 ## What Is Built
 
-- Landing page at `/` with an animated four-step walkthrough
-- Wallet-gated dashboard at `/dashboard` (ConnectKit modal, wagmi, Sepolia
-  network switch)
+- Landing page at `/`
+- Dashboard at `/dashboard`: pay in, pay the deal back, get your money back
 - Proof inspector at `/proofs/tx-892a-c4e`
-- Hardhat contract project in `contracts/`
-- `VeridexClearinghouse` deployed on Creditcoin CC3 testnet at
-  [`0x32A69a587488EB9664A7F7E6f6a6a2B33657446A`](https://creditcoin-testnet.blockscout.com/address/0x32A69a587488EB9664A7F7E6f6a6a2B33657446A),
-  using the Creditcoin `0x0FD2` precompile interface
+- `VeridexClearinghouse` on Creditcoin CC3 testnet:
+  [`0x32A69a587488EB9664A7F7E6f6a6a2B33657446A`](https://creditcoin-testnet.blockscout.com/address/0x32A69a587488EB9664A7F7E6f6a6a2B33657446A)
 
-The dashboard shows honest empty states until a facility opens or a deposit
-confirms. The proof inspector is a labeled example walkthrough. Nothing in
-the UI claims a real Sepolia USDC transfer or Creditcoin proof submission
-unless performed with real wallet and deployment configuration.
+Demo on Creditcoin with CTC: pay in, pay the deal back (same amount), get
+your money back. One person can play both sides to prove the line.
 
 ## Architecture
 
-Four pieces, one direction:
+Live demo path:
 
 ```text
-Wallet (ConnectKit)
-  -> Sepolia source vault        deposit confirms, its slot in the block is fixed
-  -> Merkle inclusion proof      the block's math yields one exact position
-  -> CC3 clearinghouse (0x0FD2)  proof verified on-chain, rank recorded
+Wallet -> pay in CTC -> line on Creditcoin -> pay the deal back -> first in line gets CTC back
 ```
 
-1. **Frontend (Next.js).** Landing page and dashboard. Wallets connect through
-   ConnectKit and wagmi. The dashboard prepares deposits on Sepolia and shows
-   the queue. Nothing is signed until the user confirms in their wallet.
-2. **Source chain (Ethereum Sepolia).** Deposits go to the source vault. The
-   position of a deposit inside its block decides who is first in line.
-3. **Proof.** A Merkle inclusion proof ties the deposit to one exact slot in a
-   finalized block. After finality the slot cannot change, so the order cannot
-   be bought or relayed differently later.
-4. **Settlement (Creditcoin CC3).** The `VeridexClearinghouse` contract checks
-   the proof through the Creditcoin `0x0FD2` precompile and records the rank.
-   The clearinghouse only trusts the configured source vault and chain key.
+Creditcoin can also check a deposit from another chain (USC / `0x0FD2`). Same
+rule: first confirmed, first paid. The working loop judges can click is the
+CTC path on Creditcoin.
 
 All shared values (RPC URLs, chain IDs, vault, clearinghouse address, chain
 key) live in `veridex.config.ts` so the frontend and the contracts stay in
