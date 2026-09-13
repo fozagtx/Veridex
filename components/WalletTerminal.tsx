@@ -43,9 +43,11 @@ export function WalletTerminal() {
   const revertTimer = useRef<number | null>(null);
   const shakeTimer = useRef<number | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  const { address, isConnected, chainId } = useAccount();
+  const fallbackChainId = useChainId();
   const { switchChain, isPending } = useSwitchChain();
+  const activeChainId = chainId ?? fallbackChainId;
+  const onSepolia = activeChainId === sepolia.id;
 
   const canPrepare = useMemo(() => {
     return Boolean(isConnected && address && Number(amount) > 0);
@@ -110,15 +112,23 @@ export function WalletTerminal() {
     };
   }, []);
 
-  function useSepolia() {
+  function requestSepolia(nextStatus: string) {
     clearErrorVisual();
+    setStatus("Check your wallet to switch to Ethereum Sepolia.");
     switchChain(
       { chainId: sepolia.id },
       {
-        onSuccess: () => setStatus("Wallet network set to Ethereum Sepolia."),
-        onError: (cause) => showError(cause.message),
+        onSuccess: () => setStatus(nextStatus),
+        onError: (cause) => {
+          showError(cause instanceof Error ? cause.message : "Wallet rejected the network switch.");
+          setStatus("Switch to Ethereum Sepolia in your wallet, then try again.");
+        },
       },
     );
+  }
+
+  function useSepolia() {
+    requestSepolia("Wallet network set to Ethereum Sepolia.");
   }
 
   function prepareDeposit() {
@@ -127,13 +137,17 @@ export function WalletTerminal() {
       return;
     }
 
-    if (chainId !== sepolia.id) {
-      showError("Switch to Ethereum Sepolia before preparing the source-vault deposit.");
+    if (!onSepolia) {
+      requestSepolia(
+        `On Sepolia as ${shortAddress(address)}. Amount ${amount} USDC checks out. No facility is open to take this deposit yet.`,
+      );
       return;
     }
 
     clearErrorVisual();
-    setStatus(`Ready to deposit ${amount} USDC from ${shortAddress(address)}.`);
+    setStatus(
+      `On Sepolia as ${shortAddress(address)}. Amount ${amount} USDC checks out. No facility is open to take this deposit yet.`,
+    );
   }
 
   return (
@@ -142,11 +156,15 @@ export function WalletTerminal() {
         <ConnectKitButton />
         <button
           type="button"
-          className="rounded-[8px] border border-border bg-background px-4 py-2 text-sm font-semibold text-mutedForeground transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`rounded-[8px] border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+            onSepolia
+              ? "border-border bg-background text-mutedForeground hover:bg-muted/60"
+              : "border-brand bg-brand text-white hover:bg-brandDark"
+          }`}
           disabled={isPending}
           onClick={useSepolia}
         >
-          {isPending ? "Switching..." : "Use Sepolia"}
+          {isPending ? "Check your wallet" : onSepolia ? "On Sepolia" : "Use Sepolia"}
         </button>
       </div>
 
@@ -169,10 +187,10 @@ export function WalletTerminal() {
           <button
             type="button"
             className="rounded-[8px] bg-foreground px-5 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canPrepare}
+            disabled={!canPrepare || isPending}
             onClick={prepareDeposit}
           >
-            Prepare deposit
+            {isPending ? "Check your wallet" : "Prepare deposit"}
           </button>
         </div>
         <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Enter a valid amount and connect on Sepolia."}</p>
