@@ -31,18 +31,18 @@ const faqs = [
 const problemCards = [
   {
     icon: <GridIcon />,
-    title: "Pending is public",
-    copy: "Your send sits in a public waiting list before it confirms. An MEV bot can see it.",
+    title: "The mempool is public",
+    copy: "Anyone watching Creditcoin can see your pay-in before it lands, including an MEV bot.",
   },
   {
     icon: <RelayIcon />,
-    title: "MEV bot pays more fee",
-    copy: "The MEV bot pays a higher fee, confirms first, and sits at the front of the same loan.",
+    title: "A higher fee wins the race",
+    copy: "The bot pays more gas, lands in an earlier slot, and takes the front of the same loan.",
   },
   {
     icon: <ShieldIcon />,
-    title: "MEV bot is paid first",
-    copy: "When the borrower pays back, first in line is paid first. If the MEV bot confirmed first, the MEV bot is paid first.",
+    title: "Payout follows that slot",
+    copy: "When the borrower pays CTC back, the front of the line is paid, so the bot takes your money if it confirmed first.",
   },
 ];
 
@@ -50,14 +50,6 @@ const pillPrimary =
   "rounded-full bg-brand px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-brandDark";
 const pillSecondary =
   "inline-flex items-center rounded-full border border-border bg-background/60 px-8 py-4 text-sm font-semibold text-foreground backdrop-blur-sm transition-colors hover:border-foreground";
-
-function Eyebrow({ children }: { children: string }) {
-  return (
-    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mutedForeground">
-      {children}
-    </p>
-  );
-}
 
 export default function Home() {
   return (
@@ -93,47 +85,31 @@ export default function Home() {
         <div className="page-wrap">
           <div className="grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <Eyebrow>The problem</Eyebrow>
-              <h2 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                Your pending send sits{" "}
-                <span className="font-serif font-normal italic text-brand">in the open.</span>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                What goes wrong on a shared loan
               </h2>
-              <p className="mt-6 max-w-xl text-base leading-7 text-mutedForeground">
-                Several wallets fund the same loan, and the pending send is
-                public, so an MEV bot can pay a higher fee and confirm first,
-                and when the borrower pays the loan back the MEV bot is paid
-                first, which means you wait or you lose.
+              <p className="mt-5 max-w-xl text-base leading-7 text-mutedForeground">
+                You and other wallets put CTC into one loan. Your pay-in sits
+                in the open until it confirms, so an MEV bot can outbid you,
+                land first, and collect first when the borrower pays back.
               </p>
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-8">
-              <Eyebrow>The line</Eyebrow>
-              <p className="mt-5 font-serif text-7xl italic leading-none text-brand">#1 gets paid</p>
+              <p className="text-sm font-semibold text-foreground">A line after two confirms</p>
+              <ol className="mt-5 space-y-3 font-mono text-sm">
+                <li className="flex items-center justify-between rounded-[10px] border border-brand bg-background px-4 py-3">
+                  <span className="text-brand">#1  0xA4f…91B</span>
+                  <span className="text-mutedForeground">you</span>
+                </li>
+                <li className="flex items-center justify-between rounded-[10px] border border-border bg-background px-4 py-3 text-mutedForeground">
+                  <span>#2  0x9Ff…7aA</span>
+                  <span>later</span>
+                </li>
+              </ol>
               <p className="mt-5 text-sm leading-6 text-mutedForeground">
-                The line is the order in which pay-ins confirm, and the wallet
-                at the front of that line is the first one paid when the
-                borrower pays the loan back.
+                #1 is paid when the borrower puts CTC back in. #2 waits.
               </p>
-              <div className="mt-7 grid grid-cols-4 gap-2">
-                {["1", "2", "3", "4"].map((position) => {
-                  const you = position === "1";
-                  return (
-                    <div
-                      key={position}
-                      className={`rounded-[10px] border p-3 text-center ${
-                        you ? "border-brand bg-background" : "border-border bg-background"
-                      }`}
-                    >
-                      <p className={`font-mono text-xl ${you ? "text-brand" : "text-foreground"}`}>
-                        #{position}
-                      </p>
-                      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.5px] text-mutedForeground">
-                        {you ? "You" : "Waits"}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           </div>
 
@@ -152,61 +128,46 @@ export default function Home() {
       </section>
 
       <section id="about" className="scroll-mt-20 border-t border-border py-24 sm:py-32">
-        <div className="page-wrap grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
-          <div>
-            <Eyebrow>How the line works</Eyebrow>
-            <h2 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-5xl">
-              First in,{" "}
-              <span className="font-serif font-normal italic text-brand">first paid back.</span>
-            </h2>
-            <div className="mt-6 space-y-4 text-base leading-7 text-mutedForeground">
-              <p>
-                Several wallets fund the same on-chain loan. They line up to
-                get paid back. Whoever confirmed first gets paid first.
-                Whoever confirmed later waits.
+        <div className="page-wrap">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            How you run it
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-mutedForeground">
+            One wallet can play both sides. Step 2 is the borrower paying the
+            loan back. Skip it and nobody gets CTC out.
+          </p>
+          <ol className="mt-10 grid gap-6 sm:grid-cols-3">
+            <li className="border-t border-border pt-4">
+              <p className="font-mono text-xs text-mutedForeground">01</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">Pay in</p>
+              <p className="mt-2 text-sm leading-6 text-mutedForeground">
+                Send CTC to the clearinghouse. After it confirms you stand in
+                line.
               </p>
-              <p>
-                Veridex locks that order on Creditcoin. After your pay-in
-                confirms, an MEV bot cannot step in front of you.
+            </li>
+            <li className="border-t border-border pt-4">
+              <p className="font-mono text-xs text-mutedForeground">02</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">Pay the loan back</p>
+              <p className="mt-2 text-sm leading-6 text-mutedForeground">
+                Send the same amount again. You are pretending to be the
+                borrower so the pot has money.
               </p>
-            </div>
-            <Link
-              href="/dashboard"
-              className="mt-7 inline-block text-sm font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-brand"
-            >
-              Open the line
-            </Link>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-8">
-            <Eyebrow>Repayment line</Eyebrow>
-            <ol className="mt-6 space-y-3">
-              <li className="flex items-center gap-4 rounded-[10px] border border-border bg-background px-5 py-4">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary font-mono text-xs font-bold text-primaryForeground">
-                  1
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">First in line</p>
-                  <p className="mt-0.5 text-xs text-mutedForeground">Gets money back first</p>
-                </div>
-                <span className="font-mono text-sm text-mutedForeground">Paid first</span>
-              </li>
-              <li className="flex items-center gap-4 rounded-[10px] border border-border bg-background px-5 py-4">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border font-mono text-xs text-mutedForeground">
-                  2
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">Next in line</p>
-                  <p className="mt-0.5 text-xs text-mutedForeground">Gets money back after #1</p>
-                </div>
-                <span className="font-mono text-sm text-mutedForeground">Waits</span>
-              </li>
-            </ol>
-            <p className="mt-6 border-t border-border pt-5 text-xs leading-5 text-mutedForeground">
-              If the pot is short, the back of the line waits. The front is
-              paid first.
-            </p>
-          </div>
+            </li>
+            <li className="border-t border-border pt-4">
+              <p className="font-mono text-xs text-mutedForeground">03</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">Get my money back</p>
+              <p className="mt-2 text-sm leading-6 text-mutedForeground">
+                Only the next unpaid wallet can collect, and only that wallet
+                gets the CTC.
+              </p>
+            </li>
+          </ol>
+          <Link
+            href="/dashboard"
+            className="mt-10 inline-block text-sm font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-brand"
+          >
+            Open the dashboard
+          </Link>
         </div>
       </section>
 
@@ -215,11 +176,7 @@ export default function Home() {
       <section id="faq" className="scroll-mt-20 border-t border-border py-24 sm:py-32">
         <div className="page-wrap grid items-start gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
           <div>
-            <Eyebrow>FAQ</Eyebrow>
-            <h2 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-5xl">
-              Questions,{" "}
-              <span className="font-serif font-normal italic text-brand">answered.</span>
-            </h2>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">FAQ</h2>
           </div>
           <div className="divide-y divide-border rounded-2xl border border-border bg-card">
             {faqs.map(([question, answer]) => (
@@ -239,16 +196,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-border py-28 sm:py-36">
-        <div className="page-wrap text-center">
-          <h2 className="mx-auto max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-6xl">
-            Pay in. Pay it back.{" "}
-            <span className="font-serif font-normal italic text-brand">Get paid.</span>
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-mutedForeground">
-            Connect, send CTC, and the line shows who gets paid first.
+      <section className="border-t border-border py-20 sm:py-24">
+        <div className="page-wrap flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+          <p className="max-w-lg text-lg font-semibold text-foreground">
+            The clearinghouse is on Creditcoin CC3. You need CTC in the wallet.
           </p>
-          <ConnectWalletButton className={`mt-10 ${pillPrimary}`} />
+          <ConnectWalletButton className={pillPrimary} />
         </div>
       </section>
     </Shell>

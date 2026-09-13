@@ -42,7 +42,7 @@ const steps = [
   {
     number: "03",
     title: "See your place",
-    copy: "Your place locks when the pay-in confirms. An MEV bot cannot jump it.",
+    copy: "The dashboard reads the line from the clearinghouse after your tx confirms.",
     demo: "rank",
   },
   {
@@ -62,23 +62,23 @@ const wallets = [
 const protocol = [
   {
     icon: <GridIcon />,
-    title: "Confirm order is the line",
-    copy: "Who confirms first keeps first place. Later sends append. They cannot move ahead.",
+    title: "fund()",
+    copy: "A confirmed CTC send appends your wallet to the loan line. Later fund calls cannot move ahead of you.",
   },
   {
     icon: <KeyIcon />,
-    title: "Connect to see the line",
-    copy: "The live line stays hidden until a wallet connects.",
+    title: "repay()",
+    copy: "Anyone can fill the payout pot. The dashboard uses this so you can pretend to be the borrower.",
   },
   {
     icon: <GlobeIcon />,
-    title: "Lives on Creditcoin",
-    copy: "The line and the payout live on the same chain. You send CTC.",
+    title: "getPaidBack()",
+    copy: "Only the next unpaid place can collect, and only if that wallet is the one calling.",
   },
   {
     icon: <ShieldIcon />,
-    title: "Pay-back fills the pot",
-    copy: "Money does not come back by itself. Step 2 is required. Then first in line is paid.",
+    title: "processCapitalLock()",
+    copy: "USC at 0x0FD2 checks a pay-in from another chain, then inserts that wallet by block and tx index.",
   },
 ];
 
@@ -318,10 +318,8 @@ export function ProtocolGrid() {
     <section className="border-t border-border py-24 sm:py-32">
       <div className="page-wrap">
         <div className="mb-14 max-w-3xl">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mutedForeground">The protocol</p>
-          <h2 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            Built so no one can{" "}
-            <span className="font-serif font-normal italic text-brand">jump the line.</span>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            What the contract actually does
           </h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
