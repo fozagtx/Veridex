@@ -74,9 +74,9 @@ export default function Home() {
               <span className="block font-serif font-normal italic text-brand">First paid.</span>
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
-              Several wallets fund the same on-chain loan. A bot can confirm
-              first and take first payout. Veridex locks the line on
-              Creditcoin. A bot cannot cut in.
+              This is on-chain lending. More than one wallet can fund the same
+              loan. A bot can confirm first and take the first payout. Veridex
+              keeps the line on Creditcoin so a later send cannot jump ahead.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />

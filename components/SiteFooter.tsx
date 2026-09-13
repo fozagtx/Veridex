@@ -24,8 +24,9 @@ export function SiteFooter() {
               <span className="text-base font-bold tracking-tight">Veridex</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-6 text-mutedForeground">
-              Same on-chain loan. First confirmed, first paid. A bot cannot
-              cut in.
+              On-chain lending. When several wallets fund the same loan, the
+              one that confirmed first is paid first. A bot cannot jump the
+              line.
             </p>
           </div>
 
