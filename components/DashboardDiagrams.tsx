@@ -76,7 +76,7 @@ export function QueueDiagram({ filled = false, youAreFirst = false }: { filled?:
         );
       })}
       <span className="ml-1 font-mono text-[10px] text-mutedForeground">
-        {youAreFirst ? "you are here" : filled ? "first seat taken" : "your rank lands here"}
+        {youAreFirst ? "you are here" : filled ? "first seat taken" : "your place lands here"}
       </span>
     </div>
   );

@@ -147,11 +147,11 @@ export function WalletTerminal({
       return;
     }
     if (locked && locked.funder.toLowerCase() === address.toLowerCase()) {
-      setStatus(`You are #1 in line. ${formatCtc(locked.amount)} CTC is locked.`);
+      setStatus(`You paid in first. You get paid back first. ${formatCtc(locked.amount)} CTC is in the pot.`);
       return;
     }
     if (locked) {
-      setStatus(`Connected as ${shortAddress(address)}. #1 is already ${shortAddress(locked.funder)}.`);
+      setStatus(`${shortAddress(locked.funder)} paid in first. You would wait behind them.`);
       return;
     }
     setStatus(`Connected as ${shortAddress(address)}. Enter an amount and prepare your deposit.`);
@@ -304,8 +304,8 @@ export function WalletGate({ children }: { children: ReactNode }) {
           Connect a wallet to enter the clearing room.
         </h2>
         <p className="mt-2 max-w-lg text-sm leading-6 text-mutedForeground">
-          Facility terms, queue rank, and deposit controls appear after
-          connection. Nothing is submitted without your signature.
+          You can send CTC and see who gets paid back first after you
+          connect. Nothing moves without your signature.
         </p>
         <ConnectWalletButton className="mt-5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brandDark" />
       </div>

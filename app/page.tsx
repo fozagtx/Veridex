@@ -7,28 +7,28 @@ import { Shell } from "@/components/Shell";
 
 const faqs = [
   [
-    "What is seniority?",
-    "Your place in the repayment line. Senior lenders are repaid first and earn less. Junior lenders are repaid last, absorb losses first, and earn more. Veridex proves that place before you commit.",
+    "What is my place in line?",
+    "Who gets their money back first. If you paid in first, you get paid back first. If you paid in later, you wait. That is the whole idea.",
   ],
   [
     "What does Veridex actually prove?",
-    "The order in which deposits were confirmed. Once a block is final, that order is locked into the block's math, so no one can rewrite it.",
+    "The order in which deposits were confirmed. Once a block is final, that order is locked, so no one can rewrite it.",
   ],
   [
     "Which chains are supported?",
-    "Deposits run on Ethereum Sepolia today. Veridex settles and checks proofs on Creditcoin CC3.",
+    "You send CTC on Creditcoin CC3. The clearinghouse lives there and keeps the line.",
   ],
   [
-    "Do I need to deposit to see my rank?",
-    "No. Connect a wallet and your queue position is visible before any capital moves. Preparing a deposit never submits a transaction.",
+    "Do I need to deposit to see my place?",
+    "Yes. After your deposit confirms, the dashboard shows if you are first or waiting behind someone.",
   ],
   [
     "What stops a bot from taking my place?",
-    "Your place comes from the order the block finalized, not from who relays fastest. A copied or reordered deposit lands in a different slot, so it can never take yours.",
+    "Your place comes from the order the block confirmed, not from who clicks fastest. A copied deposit lands in a later slot, so it cannot take yours.",
   ],
   [
     "What does preparing a deposit do?",
-    "It checks the amount, the network, and the vault before anything happens. Nothing is signed or sent until you confirm it in your wallet.",
+    "It opens MetaMask so you can send CTC to the clearinghouse. Nothing moves until you confirm in your wallet.",
   ],
 ];
 
@@ -162,26 +162,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Seniority in plain terms */}
+      {/* Place in line */}
       <section id="about" className="scroll-mt-20 border-t border-border py-24 sm:py-32">
         <div className="page-wrap grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
-            <Eyebrow>Seniority in plain terms</Eyebrow>
+            <Eyebrow>How the line works</Eyebrow>
             <h2 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-5xl">
-              Seniority is your place in the{" "}
-              <span className="font-serif font-normal italic text-brand">repayment line.</span>
+              First in,{" "}
+              <span className="font-serif font-normal italic text-brand">first paid back.</span>
             </h2>
             <div className="mt-6 space-y-4 text-base leading-7 text-mutedForeground">
               <p>
-                When several lenders fund the same shipment, they queue up to
-                get repaid. First in line is called senior: paid first, least
-                risk, lowest yield. Last in line is junior: paid last, eats
-                any loss first, and earns more for taking that risk.
+                Several people can fund the same deal. They line up to get
+                their money back. Whoever paid in first gets paid back first.
+                Whoever paid in later waits.
               </p>
               <p>
-                Veridex proves your place in that line from confirmed
-                blockchain data. Once your rank is set, no bot or middleman
-                can jump in front of you.
+                Veridex locks that order when the deposit confirms. After
+                that, no bot or middleman can step in front of you.
               </p>
             </div>
             <Link
@@ -200,25 +198,25 @@ export default function Home() {
                   1
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">Senior tranche</p>
-                  <p className="mt-0.5 text-xs text-mutedForeground">Paid first</p>
+                  <p className="text-sm font-semibold text-foreground">First in line</p>
+                  <p className="mt-0.5 text-xs text-mutedForeground">Gets money back first</p>
                 </div>
-                <span className="font-mono text-sm text-mutedForeground">Lower rate</span>
+                <span className="font-mono text-sm text-mutedForeground">Safer</span>
               </li>
               <li className="flex items-center gap-4 rounded-[10px] border border-border bg-background px-5 py-4">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border font-mono text-xs text-mutedForeground">
                   2
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">Junior tranche</p>
-                  <p className="mt-0.5 text-xs text-mutedForeground">Paid after seniors</p>
+                  <p className="text-sm font-semibold text-foreground">Next in line</p>
+                  <p className="mt-0.5 text-xs text-mutedForeground">Gets money back after #1</p>
                 </div>
-                <span className="font-mono text-sm text-mutedForeground">Higher rate</span>
+                <span className="font-mono text-sm text-mutedForeground">Waits</span>
               </li>
             </ol>
             <p className="mt-6 border-t border-border pt-5 text-xs leading-5 text-mutedForeground">
-              If the deal loses money, the junior tranche absorbs the loss
-              before the senior. That is why junior pays more.
+              If the deal loses money, the people at the back of the line
+              lose first. The person at the front is covered first.
             </p>
           </div>
         </div>
@@ -258,12 +256,11 @@ export default function Home() {
       <section className="border-t border-border py-28 sm:py-36">
         <div className="page-wrap text-center">
           <h2 className="mx-auto max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-6xl">
-            Check your position{" "}
-            <span className="font-serif font-normal italic text-brand">before you fund.</span>
+            See your place{" "}
+            <span className="font-serif font-normal italic text-brand">after you pay in.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-mutedForeground">
-            Connection takes one click. Your rank is shown before any capital
-            moves.
+            Connect, send CTC, and the line shows who gets paid back first.
           </p>
           <ConnectWalletButton className={`mt-10 ${pillPrimary}`} />
         </div>

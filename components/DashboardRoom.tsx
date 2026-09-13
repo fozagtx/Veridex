@@ -33,15 +33,15 @@ export function DashboardRoom() {
 
   const facilityNote = record
     ? youAreFirst
-      ? `Open. You are #1. ${formatCtc(record.amount)} CTC locked at block ${record.blockHeight.toString()}.`
-      : `Open. #1 is ${shortAddress(record.funder)} with ${formatCtc(record.amount)} CTC.`
-    : "None open for funding yet. When one opens, it works like this:";
+      ? `This deal is live. You paid in first. ${formatCtc(record.amount)} CTC is in the pot.`
+      : `This deal is live. ${shortAddress(record.funder)} paid in first with ${formatCtc(record.amount)} CTC.`
+    : "No money in this deal yet. When someone pays in, it looks like this:";
 
   const queueNote = record
     ? youAreFirst
-      ? "Your place is locked. You are first in the repayment line."
-      : `${shortAddress(record.funder)} is first. A later deposit stays behind them.`
-    : "No proven deposits yet. Once you fund, your rank locks in:";
+      ? "You get your money back first."
+      : `${shortAddress(record.funder)} gets paid back first. You wait.`
+    : "Nobody has paid in yet. After you do, you will see who is first.";
 
   return (
     <Panel className="p-5 sm:p-6">

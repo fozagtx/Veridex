@@ -41,14 +41,14 @@ const steps = [
   },
   {
     number: "03",
-    title: "Verify your rank",
-    copy: "Your place in line is locked by the block itself, so relayers cannot reorder it.",
+    title: "See your place",
+    copy: "Your place in line is locked when the deposit confirms, so nobody can jump ahead.",
     demo: "rank",
   },
   {
     number: "04",
-    title: "Fund your slot",
-    copy: "Prepare the deposit. Nothing is signed until you confirm.",
+    title: "Pay in",
+    copy: "Send CTC to the clearinghouse. Nothing moves until you confirm in your wallet.",
     demo: "fund",
   },
 ] as const;
@@ -202,14 +202,14 @@ function RankDemo({ playing }: { playing: boolean }) {
           1
         </span>
         <span className="truncate font-mono text-[11px] text-foreground">0xA4f...91B</span>
-        <span className="ml-auto shrink-0 text-[10px] text-mutedForeground">Senior</span>
+        <span className="ml-auto shrink-0 text-[10px] text-mutedForeground">First</span>
       </div>
       <div className="flex items-center gap-2 rounded-[8px] border border-border bg-card px-2.5 py-1.5">
         <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-border font-mono text-[9px] text-mutedForeground">
           2
         </span>
         <span className="truncate font-mono text-[11px] text-foreground">0x3Ec...402</span>
-        <span className="ml-auto shrink-0 text-[10px] text-mutedForeground">Junior</span>
+        <span className="ml-auto shrink-0 text-[10px] text-mutedForeground">Next</span>
       </div>
     </div>
   );

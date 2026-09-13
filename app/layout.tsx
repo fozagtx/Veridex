@@ -25,7 +25,7 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: "Veridex",
-  description: "Veridex proves who paid in first, so bots and relayers cannot jump ahead in the repayment line. Clearing on Creditcoin CC3.",
+  description: "Veridex proves who paid in first, so bots cannot jump ahead in the repayment line. Clearing on Creditcoin CC3.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
