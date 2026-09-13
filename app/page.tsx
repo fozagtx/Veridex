@@ -70,15 +70,13 @@ export default function Home() {
         <div className="page-wrap relative grid min-h-[92vh] items-center gap-12 pb-24 pt-32 sm:pt-36 lg:grid-cols-2 lg:gap-10">
           <div>
             <h1 className="text-5xl font-extrabold leading-[0.98] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
-              <span className="block">The wallet that</span>
-              <span className="block">confirms first is</span>
-              <span className="block font-serif font-normal italic text-brand">the one that gets paid first.</span>
+              <span className="block">An MEV bot</span>
+              <span className="block font-serif font-normal italic text-brand">cannot jump this loan.</span>
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-mutedForeground">
-              This is on-chain lending where more than one wallet can fund the
-              same loan, and if an MEV bot confirms first it takes the first payout,
-              so Veridex keeps the line on Creditcoin and a later send cannot
-              jump ahead.
+              Several wallets can fund the same loan on Creditcoin, and if an
+              MEV bot confirms first it gets paid first, so Veridex locks the
+              line.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <ConnectWalletButton className={pillPrimary} />
