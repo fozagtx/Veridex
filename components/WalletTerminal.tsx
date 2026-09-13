@@ -3,9 +3,18 @@
 import { ConnectKitButton } from "connectkit";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { ConnectWalletButton } from "@/components/ConnectWallet";
+import {
+  getInjectedChainId,
+  getInjectedProvider,
+  sendPrepareDeposit,
+  switchToSepolia,
+  waitForSepolia,
+  walletErrorMessage,
+} from "@/lib/injectedWallet";
+import { veridexConfig } from "@/veridex.config";
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -37,17 +46,16 @@ export function WalletTerminal() {
   const [error, setError] = useState("");
   const [isError, setIsError] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
+  const [walletChainId, setWalletChainId] = useState<number | null>(null);
+  const [isWorking, setIsWorking] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const revertTimer = useRef<number | null>(null);
   const shakeTimer = useRef<number | null>(null);
 
-  const { address, isConnected, chainId } = useAccount();
-  const fallbackChainId = useChainId();
-  const { switchChain, isPending } = useSwitchChain();
-  const activeChainId = chainId ?? fallbackChainId;
-  const onSepolia = activeChainId === sepolia.id;
+  const { address, isConnected } = useAccount();
+  const onSepolia = walletChainId === sepolia.id;
 
   const canPrepare = useMemo(() => {
     return Boolean(isConnected && address && Number(amount) > 0);
@@ -98,6 +106,35 @@ export function WalletTerminal() {
   }, [status]);
 
   useEffect(() => {
+    const provider = getInjectedProvider();
+    if (!provider) {
+      setWalletChainId(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function syncChain() {
+      const chainId = await getInjectedChainId();
+      if (!cancelled) {
+        setWalletChainId(chainId);
+      }
+    }
+
+    function onChainChanged(hex: unknown) {
+      const parsed = Number.parseInt(String(hex), 16);
+      setWalletChainId(Number.isFinite(parsed) ? parsed : null);
+    }
+
+    void syncChain();
+    provider.on?.("chainChanged", onChainChanged);
+    return () => {
+      cancelled = true;
+      provider.removeListener?.("chainChanged", onChainChanged);
+    };
+  }, [isConnected, address]);
+
+  useEffect(() => {
     if (isConnected && address) {
       setStatus(`Connected as ${shortAddress(address)}. Enter an amount and prepare your deposit.`);
     } else {
@@ -112,42 +149,56 @@ export function WalletTerminal() {
     };
   }, []);
 
-  function requestSepolia(nextStatus: string) {
+  async function ensureSepolia() {
+    const current = await getInjectedChainId();
+    setWalletChainId(current);
+    if (current === sepolia.id) {
+      return;
+    }
+    setStatus("Check MetaMask and switch to Ethereum Sepolia.");
+    await switchToSepolia();
+    await waitForSepolia();
+    setWalletChainId(sepolia.id);
+  }
+
+  async function useSepolia() {
+    if (isWorking) {
+      return;
+    }
+    setIsWorking(true);
     clearErrorVisual();
-    setStatus("Check your wallet to switch to Ethereum Sepolia.");
-    switchChain(
-      { chainId: sepolia.id },
-      {
-        onSuccess: () => setStatus(nextStatus),
-        onError: (cause) => {
-          showError(cause instanceof Error ? cause.message : "Wallet rejected the network switch.");
-          setStatus("Switch to Ethereum Sepolia in your wallet, then try again.");
-        },
-      },
-    );
+    try {
+      await ensureSepolia();
+      setStatus("Wallet network set to Ethereum Sepolia.");
+    } catch (cause) {
+      const message = walletErrorMessage(cause);
+      showError(message);
+      setStatus(message);
+    } finally {
+      setIsWorking(false);
+    }
   }
 
-  function useSepolia() {
-    requestSepolia("Wallet network set to Ethereum Sepolia.");
-  }
-
-  function prepareDeposit() {
-    if (!canPrepare || !address) {
+  async function prepareDeposit() {
+    if (!canPrepare || !address || isWorking) {
       showError("Connect a wallet and enter an amount first.");
       return;
     }
 
-    if (!onSepolia) {
-      requestSepolia(
-        `On Sepolia as ${shortAddress(address)}. Amount ${amount} USDC checks out. No facility is open to take this deposit yet.`,
-      );
-      return;
-    }
-
+    setIsWorking(true);
     clearErrorVisual();
-    setStatus(
-      `On Sepolia as ${shortAddress(address)}. Amount ${amount} USDC checks out. No facility is open to take this deposit yet.`,
-    );
+    try {
+      await ensureSepolia();
+      setStatus("Check MetaMask and confirm the Sepolia deposit.");
+      const hash = await sendPrepareDeposit(address, veridexConfig.sourceVault);
+      setStatus(`Deposit request sent from ${shortAddress(address)}. Tx ${hash.slice(0, 10)}…`);
+    } catch (cause) {
+      const message = walletErrorMessage(cause);
+      showError(message);
+      setStatus(message);
+    } finally {
+      setIsWorking(false);
+    }
   }
 
   return (
@@ -161,10 +212,10 @@ export function WalletTerminal() {
               ? "border-border bg-background text-mutedForeground hover:bg-muted/60"
               : "border-brand bg-brand text-white hover:bg-brandDark"
           }`}
-          disabled={isPending}
-          onClick={useSepolia}
+          disabled={isWorking}
+          onClick={() => void useSepolia()}
         >
-          {isPending ? "Check your wallet" : onSepolia ? "On Sepolia" : "Use Sepolia"}
+          {isWorking ? "Check MetaMask" : onSepolia ? "On Sepolia" : "Use Sepolia"}
         </button>
       </div>
 
@@ -187,13 +238,13 @@ export function WalletTerminal() {
           <button
             type="button"
             className="rounded-[8px] bg-foreground px-5 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canPrepare || isPending}
-            onClick={prepareDeposit}
+            disabled={!canPrepare || isWorking}
+            onClick={() => void prepareDeposit()}
           >
-            {isPending ? "Check your wallet" : "Prepare deposit"}
+            {isWorking ? "Check MetaMask" : "Prepare deposit"}
           </button>
         </div>
-        <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Enter a valid amount and connect on Sepolia."}</p>
+        <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Prepare opens MetaMask. You must be on Ethereum Sepolia."}</p>
       </div>
 
       <p ref={statusRef} className="t-text-swap mt-3 font-mono text-xs text-mutedForeground">Connect your wallet to choose a facility and check your place in line.</p>
