@@ -8,6 +8,19 @@ const nextConfig = {
   outputFileTracingRoot: projectRoot,
   turbopack: {
     root: projectRoot,
+    resolveAlias: {
+      "@react-native-async-storage/async-storage": "./lib/empty-module.js",
+    },
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@react-native-async-storage/async-storage": path.join(
+        projectRoot,
+        "lib/empty-module.js",
+      ),
+    };
+    return config;
   },
 };
 
