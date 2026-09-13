@@ -19,20 +19,23 @@ contract VeridexClearinghouse {
     address public immutable trustedSourceVault;
     uint256 public immutable sourceChainKey;
 
-    struct SeniorityRecord {
+    struct Place {
         address funder;
-        uint256 blockHeight;
-        uint32 txIndex;
-        uint256 seniorityKey;
         uint256 amount;
+        uint256 blockHeight;
+        uint32 index;
+        bool paidBack;
     }
 
-    mapping(bytes32 => SeniorityRecord) public seniority;
+    mapping(bytes32 => Place[]) private line;
+    mapping(bytes32 => uint256) public repaid;
+    mapping(bytes32 => uint256) public paidOut;
     mapping(bytes32 => bool) public processedProofs;
     uint32 public depositCount;
 
-    event SeniorityEstablished(bytes32 indexed tradeId, address indexed funder, uint256 blockHeight, uint32 txIndex);
-    event JuniorPosition(bytes32 indexed tradeId, address indexed funder, uint32 txIndex, uint32 seniorTxIndex);
+    event Funded(bytes32 indexed tradeId, address indexed funder, uint256 amount, uint256 place);
+    event Repaid(bytes32 indexed tradeId, address indexed payer, uint256 amount);
+    event PaidBack(bytes32 indexed tradeId, address indexed funder, uint256 amount, uint256 place);
 
     constructor(address _trustedSourceVault, uint256 _sourceChainKey) {
         require(_trustedSourceVault != address(0), "invalid vault");
@@ -43,9 +46,39 @@ contract VeridexClearinghouse {
     function fund(bytes32 tradeId) external payable {
         require(tradeId != bytes32(0), "invalid trade");
         require(msg.value > 0, "invalid amount");
+        _addPlace(tradeId, msg.sender, msg.value, block.number);
+    }
 
-        depositCount += 1;
-        _recordPosition(tradeId, msg.sender, msg.value, block.number, depositCount);
+    function repay(bytes32 tradeId) external payable {
+        require(tradeId != bytes32(0), "invalid trade");
+        require(msg.value > 0, "invalid amount");
+        require(line[tradeId].length > 0, "nobody paid in");
+        repaid[tradeId] += msg.value;
+        emit Repaid(tradeId, msg.sender, msg.value);
+    }
+
+    function getPaidBack(bytes32 tradeId) external {
+        Place[] storage places = line[tradeId];
+        uint256 available = repaid[tradeId] - paidOut[tradeId];
+
+        for (uint256 i = 0; i < places.length; i++) {
+            if (places[i].paidBack) {
+                continue;
+            }
+            require(places[i].funder == msg.sender, "not your turn");
+            require(available >= places[i].amount, "deal has not paid back enough");
+
+            places[i].paidBack = true;
+            paidOut[tradeId] += places[i].amount;
+
+            (bool ok, ) = payable(msg.sender).call{value: places[i].amount}("");
+            require(ok, "payout failed");
+
+            emit PaidBack(tradeId, msg.sender, places[i].amount, i);
+            return;
+        }
+
+        revert("nothing to collect");
     }
 
     function processCapitalLock(
@@ -74,37 +107,44 @@ contract VeridexClearinghouse {
         require(valid, "invalid proof");
 
         uint32 txIndex = IBlockProver(BLOCK_PROVER).calculateTxIndex(merkleProof);
-        _recordPosition(tradeId, funder, amount, blockHeight, txIndex);
+        _addPlace(tradeId, funder, amount, blockHeight);
+        // Keep the proof index on the last place for the USC path.
+        line[tradeId][line[tradeId].length - 1].index = txIndex;
         processedProofs[proofHash] = true;
     }
 
-    function _recordPosition(
+    function lineSize(bytes32 tradeId) external view returns (uint256) {
+        return line[tradeId].length;
+    }
+
+    function lineAt(
         bytes32 tradeId,
-        address funder,
-        uint256 amount,
-        uint256 blockHeight,
-        uint32 txIndex
-    ) internal {
-        uint256 seniorityKey = (blockHeight << 32) | uint256(txIndex);
-        SeniorityRecord storage current = seniority[tradeId];
+        uint256 i
+    ) external view returns (address funder, uint256 amount, uint256 blockHeight, uint32 index, bool paidBack) {
+        Place storage place = line[tradeId][i];
+        return (place.funder, place.amount, place.blockHeight, place.index, place.paidBack);
+    }
 
-        if (current.seniorityKey == 0 || seniorityKey < current.seniorityKey) {
-            if (current.funder != address(0) && current.funder != funder) {
-                emit JuniorPosition(tradeId, current.funder, current.txIndex, txIndex);
+    function unpaidTotal(bytes32 tradeId) external view returns (uint256 total) {
+        Place[] storage places = line[tradeId];
+        for (uint256 i = 0; i < places.length; i++) {
+            if (!places[i].paidBack) {
+                total += places[i].amount;
             }
-
-            seniority[tradeId] = SeniorityRecord({
-                funder: funder,
-                blockHeight: blockHeight,
-                txIndex: txIndex,
-                seniorityKey: seniorityKey,
-                amount: amount
-            });
-
-            emit SeniorityEstablished(tradeId, funder, blockHeight, txIndex);
-            return;
         }
+    }
 
-        emit JuniorPosition(tradeId, funder, txIndex, current.txIndex);
+    function _addPlace(bytes32 tradeId, address funder, uint256 amount, uint256 blockHeight) internal {
+        depositCount += 1;
+        line[tradeId].push(
+            Place({
+                funder: funder,
+                amount: amount,
+                blockHeight: blockHeight,
+                index: depositCount,
+                paidBack: false
+            })
+        );
+        emit Funded(tradeId, funder, amount, line[tradeId].length - 1);
     }
 }

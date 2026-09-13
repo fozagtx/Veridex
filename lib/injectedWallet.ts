@@ -1,5 +1,5 @@
 import { veridexConfig } from "@/veridex.config";
-import { encodeFund, facilityId } from "@/lib/clearinghouse";
+import { encodeFund, encodeGetPaidBack, encodeRepay, facilityId } from "@/lib/clearinghouse";
 
 const CREDITCOIN_ID = veridexConfig.chains.creditcoinTestnet.chainId;
 const CREDITCOIN_HEX = `0x${CREDITCOIN_ID.toString(16)}`;
@@ -100,7 +100,7 @@ export async function waitForCreditcoin(timeoutMs = 20000): Promise<void> {
   throw new Error("MetaMask is still not on Creditcoin Testnet.");
 }
 
-export async function sendClearinghouseFund(from: string, valueWei: bigint): Promise<string> {
+async function sendToClearinghouse(from: string, data: string, valueWei = BigInt(0)): Promise<string> {
   const provider = getInjectedProvider();
   if (!provider) {
     throw new Error("Open MetaMask, then try again.");
@@ -113,12 +113,24 @@ export async function sendClearinghouseFund(from: string, valueWei: bigint): Pro
         from,
         to: veridexConfig.clearinghouse,
         value: `0x${valueWei.toString(16)}`,
-        data: encodeFund(facilityId),
+        data,
       },
     ],
   });
 
   return String(hash);
+}
+
+export async function sendClearinghouseFund(from: string, valueWei: bigint): Promise<string> {
+  return sendToClearinghouse(from, encodeFund(facilityId), valueWei);
+}
+
+export async function sendClearinghouseRepay(from: string, valueWei: bigint): Promise<string> {
+  return sendToClearinghouse(from, encodeRepay(facilityId), valueWei);
+}
+
+export async function sendClearinghousePayout(from: string): Promise<string> {
+  return sendToClearinghouse(from, encodeGetPaidBack(facilityId));
 }
 
 export function walletErrorMessage(error: unknown): string {
@@ -128,10 +140,22 @@ export function walletErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     const text = error.message.toLowerCase();
     if (text.includes("insufficient funds") || text.includes("gas")) {
-      return "You need Creditcoin testnet CTC for the deposit and gas.";
+      return "You need Creditcoin testnet CTC for this and for gas.";
+    }
+    if (text.includes("not your turn")) {
+      return "The person in front of you gets paid first.";
+    }
+    if (text.includes("not paid back enough") || text.includes("has not paid back")) {
+      return "The deal has not paid back enough yet.";
+    }
+    if (text.includes("nothing to collect")) {
+      return "You have nothing to collect.";
+    }
+    if (text.includes("nobody paid in")) {
+      return "Nobody has paid in yet.";
     }
     if (text.includes("execution reverted") || text.includes("reverted")) {
-      return "The clearinghouse rejected the call. Redeploy the contract that includes fund().";
+      return "The clearinghouse rejected that. Check the line and try the next step.";
     }
     return error.message;
   }

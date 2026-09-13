@@ -29,7 +29,7 @@ Deposits land on Ethereum Sepolia. Veridex proves the deposit on Creditcoin with
 - Wallet: ConnectKit + wagmi. Connect opens the modal. On connect, route to `/dashboard`.
 - Dashboard: one card. Wallet first. Flow, facility stack, and queue as diagrams. No hex vault boxes.
 - Source deposits: Ethereum Sepolia. Vault and chain key live in shared config.
-- Settlement: `VeridexClearinghouse` on Creditcoin CC3 testnet (`0x890d6Fdc4aB8B55bA228Fb991257ad2Bac673761`).
+- Settlement: `VeridexClearinghouse` on Creditcoin CC3 testnet (`0x32A69a587488EB9664A7F7E6f6a6a2B33657446A`).
 - USC: the clearinghouse calls the native verifier at `0x0FD2` with the Merkle proof and continuity proof, then records `seniorityKey` from block height and tx index.
 - Replay: the same proof cannot be processed twice.
 - Trust: only the configured Sepolia vault and chain key (`11155111`).

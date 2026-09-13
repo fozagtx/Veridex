@@ -1,4 +1,4 @@
-import { decodeFunctionResult, encodeFunctionData, formatEther, parseEther, zeroAddress } from "viem";
+import { decodeFunctionResult, encodeFunctionData, formatEther, parseEther } from "viem";
 import { veridexConfig } from "@/veridex.config";
 
 export const clearinghouseAbi = [
@@ -11,40 +11,96 @@ export const clearinghouseAbi = [
   },
   {
     type: "function",
-    name: "seniority",
+    name: "repay",
+    stateMutability: "payable",
+    inputs: [{ name: "tradeId", type: "bytes32" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "getPaidBack",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "tradeId", type: "bytes32" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "lineSize",
     stateMutability: "view",
     inputs: [{ name: "tradeId", type: "bytes32" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "lineAt",
+    stateMutability: "view",
+    inputs: [
+      { name: "tradeId", type: "bytes32" },
+      { name: "i", type: "uint256" },
+    ],
     outputs: [
       { name: "funder", type: "address" },
-      { name: "blockHeight", type: "uint256" },
-      { name: "txIndex", type: "uint32" },
-      { name: "seniorityKey", type: "uint256" },
       { name: "amount", type: "uint256" },
+      { name: "blockHeight", type: "uint256" },
+      { name: "index", type: "uint32" },
+      { name: "paidBack", type: "bool" },
     ],
+  },
+  {
+    type: "function",
+    name: "repaid",
+    stateMutability: "view",
+    inputs: [{ name: "tradeId", type: "bytes32" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "paidOut",
+    stateMutability: "view",
+    inputs: [{ name: "tradeId", type: "bytes32" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "unpaidTotal",
+    stateMutability: "view",
+    inputs: [{ name: "tradeId", type: "bytes32" }],
+    outputs: [{ name: "total", type: "uint256" }],
   },
 ] as const;
 
-export function encodeFund(tradeId: `0x${string}`): `0x${string}` {
-  return encodeFunctionData({
-    abi: clearinghouseAbi,
-    functionName: "fund",
-    args: [tradeId],
-  });
-}
+export const facilityId = veridexConfig.facilityId as `0x${string}`;
+
+export type LinePlace = {
+  funder: `0x${string}`;
+  amount: bigint;
+  blockHeight: bigint;
+  index: number;
+  paidBack: boolean;
+};
+
+export type DealState = {
+  places: LinePlace[];
+  repaid: bigint;
+  paidOut: bigint;
+  unpaid: bigint;
+};
 
 export function depositValue(amount: string): bigint {
   return parseEther(amount);
 }
 
-export const facilityId = veridexConfig.facilityId as `0x${string}`;
+export function encodeFund(tradeId: `0x${string}`): `0x${string}` {
+  return encodeFunctionData({ abi: clearinghouseAbi, functionName: "fund", args: [tradeId] });
+}
 
-export type Seniority = {
-  funder: `0x${string}`;
-  blockHeight: bigint;
-  txIndex: number;
-  seniorityKey: bigint;
-  amount: bigint;
-};
+export function encodeRepay(tradeId: `0x${string}`): `0x${string}` {
+  return encodeFunctionData({ abi: clearinghouseAbi, functionName: "repay", args: [tradeId] });
+}
+
+export function encodeGetPaidBack(tradeId: `0x${string}`): `0x${string}` {
+  return encodeFunctionData({ abi: clearinghouseAbi, functionName: "getPaidBack", args: [tradeId] });
+}
 
 async function creditcoinRpc(method: string, params: unknown[]): Promise<unknown> {
   const response = await fetch(veridexConfig.chains.creditcoinTestnet.rpcUrl, {
@@ -59,11 +115,11 @@ async function creditcoinRpc(method: string, params: unknown[]): Promise<unknown
   return payload.result;
 }
 
-export async function readSeniority(): Promise<Seniority | null> {
+async function call(functionName: "lineSize" | "repaid" | "paidOut" | "unpaidTotal", args: readonly unknown[]) {
   const data = encodeFunctionData({
     abi: clearinghouseAbi,
-    functionName: "seniority",
-    args: [facilityId],
+    functionName,
+    args: args as never,
   });
   const result = await creditcoinRpc("eth_call", [
     { to: veridexConfig.clearinghouse, data },
@@ -72,24 +128,54 @@ export async function readSeniority(): Promise<Seniority | null> {
   if (typeof result !== "string" || result === "0x") {
     return null;
   }
-
-  const decoded = decodeFunctionResult({
+  return decodeFunctionResult({
     abi: clearinghouseAbi,
-    functionName: "seniority",
+    functionName,
     data: result as `0x${string}`,
   });
+}
 
-  const funder = decoded[0];
-  if (!funder || funder.toLowerCase() === zeroAddress) {
-    return null;
+export async function readDeal(): Promise<DealState> {
+  const sizeRaw = await call("lineSize", [facilityId]);
+  const size = sizeRaw ? Number(sizeRaw) : 0;
+  const places: LinePlace[] = [];
+
+  for (let i = 0; i < size; i += 1) {
+    const data = encodeFunctionData({
+      abi: clearinghouseAbi,
+      functionName: "lineAt",
+      args: [facilityId, BigInt(i)],
+    });
+    const result = await creditcoinRpc("eth_call", [
+      { to: veridexConfig.clearinghouse, data },
+      "latest",
+    ]);
+    if (typeof result !== "string" || result === "0x") {
+      continue;
+    }
+    const decoded = decodeFunctionResult({
+      abi: clearinghouseAbi,
+      functionName: "lineAt",
+      data: result as `0x${string}`,
+    });
+    places.push({
+      funder: decoded[0],
+      amount: decoded[1],
+      blockHeight: decoded[2],
+      index: Number(decoded[3]),
+      paidBack: Boolean(decoded[4]),
+    });
   }
 
+  const repaidRaw = await call("repaid", [facilityId]);
+  const paidOutRaw = await call("paidOut", [facilityId]);
+  const unpaidRaw = await call("unpaidTotal", [facilityId]);
+
   return {
-    funder,
-    blockHeight: decoded[1],
-    txIndex: Number(decoded[2]),
-    seniorityKey: decoded[3],
-    amount: decoded[4],
+    places,
+    repaid: repaidRaw ? BigInt(repaidRaw.toString()) : BigInt(0),
+    paidOut: paidOutRaw ? BigInt(paidOutRaw.toString()) : BigInt(0),
+    unpaid: unpaidRaw ? BigInt(unpaidRaw.toString()) : BigInt(0),
   };
 }
 
@@ -100,13 +186,13 @@ export async function waitForTransaction(hash: string, timeoutMs = 60000): Promi
     if (receipt && typeof receipt === "object") {
       const status = "status" in receipt ? String(receipt.status) : "";
       if (status === "0x0") {
-        throw new Error("The clearinghouse rejected the deposit.");
+        throw new Error("The clearinghouse rejected that transaction.");
       }
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-  throw new Error("The deposit is still confirming. Check Blockscout, then refresh.");
+  throw new Error("Still confirming. Check Blockscout, then refresh.");
 }
 
 export function formatCtc(amount: bigint): string {
@@ -119,4 +205,11 @@ export function formatCtc(amount: bigint): string {
 
 export function explorerTx(hash: string): string {
   return `https://creditcoin-testnet.blockscout.com/tx/${hash}`;
+}
+
+export function stillOwed(deal: DealState): bigint {
+  if (deal.unpaid > deal.repaid - deal.paidOut) {
+    return deal.unpaid - (deal.repaid - deal.paidOut);
+  }
+  return BigInt(0);
 }

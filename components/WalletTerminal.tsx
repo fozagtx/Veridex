@@ -2,15 +2,24 @@
 
 import { ConnectKitButton } from "connectkit";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { ConnectWalletButton } from "@/components/ConnectWallet";
-import { depositValue, explorerTx, formatCtc, waitForTransaction, type Seniority } from "@/lib/clearinghouse";
+import {
+  depositValue,
+  explorerTx,
+  formatCtc,
+  stillOwed,
+  waitForTransaction,
+  type DealState,
+} from "@/lib/clearinghouse";
 import {
   creditcoinId,
   getInjectedChainId,
   getInjectedProvider,
   sendClearinghouseFund,
+  sendClearinghousePayout,
+  sendClearinghouseRepay,
   switchToCreditcoin,
   waitForCreditcoin,
   walletErrorMessage,
@@ -41,14 +50,14 @@ function swapText(el: HTMLElement | null, next: string) {
 }
 
 export function WalletTerminal({
-  onDeposited,
-  locked,
+  deal,
+  onChanged,
 }: {
-  onDeposited?: () => void;
-  locked?: Seniority | null;
+  deal: DealState | null;
+  onChanged?: () => void;
 }) {
   const [amount, setAmount] = useState("0.01");
-  const [status, setStatus] = useState("Connect your wallet to choose a facility and check your place in line.");
+  const [status, setStatus] = useState("Connect your wallet to pay in and get paid back.");
   const [error, setError] = useState("");
   const [isError, setIsError] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
@@ -63,10 +72,16 @@ export function WalletTerminal({
 
   const { address, isConnected } = useAccount();
   const onCreditcoin = walletChainId === creditcoinId;
-
-  const canPrepare = useMemo(() => {
-    return Boolean(isConnected && address && Number(amount) > 0);
-  }, [address, amount, isConnected]);
+  const canSendAmount = Boolean(isConnected && address && Number(amount) > 0);
+  const nextUnpaid = deal?.places.find((place) => !place.paidBack) ?? null;
+  const yourTurn = Boolean(
+    address && nextUnpaid && nextUnpaid.funder.toLowerCase() === address.toLowerCase(),
+  );
+  const youGotPaid = Boolean(
+    address && deal?.places.some((place) => place.funder.toLowerCase() === address.toLowerCase() && place.paidBack),
+  );
+  const owed = deal ? stillOwed(deal) : BigInt(0);
+  const dealPaidEnough = Boolean(nextUnpaid && owed === BigInt(0));
 
   function ms(name: string, fallback: number) {
     const value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
@@ -143,19 +158,31 @@ export function WalletTerminal({
 
   useEffect(() => {
     if (!isConnected || !address) {
-      setStatus("Connect your wallet to choose a facility and check your place in line.");
+      setStatus("Connect your wallet to pay in and get paid back.");
       return;
     }
-    if (locked && locked.funder.toLowerCase() === address.toLowerCase()) {
-      setStatus(`You paid in first. You get paid back first. ${formatCtc(locked.amount)} CTC is in the pot.`);
+    if (youGotPaid && !nextUnpaid) {
+      setStatus("You got your money back. The line is clear.");
       return;
     }
-    if (locked) {
-      setStatus(`${shortAddress(locked.funder)} paid in first. You would wait behind them.`);
+    if (youGotPaid) {
+      setStatus("You already got your money back.");
       return;
     }
-    setStatus(`Connected as ${shortAddress(address)}. Enter an amount and prepare your deposit.`);
-  }, [isConnected, address, locked]);
+    if (yourTurn && dealPaidEnough) {
+      setStatus("The deal paid back. Get your money now.");
+      return;
+    }
+    if (nextUnpaid && yourTurn) {
+      setStatus(`You are first in line. The deal still owes ${formatCtc(owed)} CTC.`);
+      return;
+    }
+    if (nextUnpaid) {
+      setStatus(`${shortAddress(nextUnpaid.funder)} gets paid back first.`);
+      return;
+    }
+    setStatus(`Connected as ${shortAddress(address)}. Pay in to join the line.`);
+  }, [isConnected, address, youGotPaid, nextUnpaid, yourTurn, dealPaidEnough, owed]);
 
   useEffect(() => {
     return () => {
@@ -176,15 +203,36 @@ export function WalletTerminal({
     setWalletChainId(creditcoinId);
   }
 
-  async function useCreditcoin() {
-    if (isWorking) {
+  async function parseAmount() {
+    let value: bigint;
+    try {
+      value = depositValue(amount);
+    } catch {
+      showError("Enter a valid CTC amount.");
+      return null;
+    }
+    if (value <= BigInt(0)) {
+      showError("Enter a valid CTC amount.");
+      return null;
+    }
+    return value;
+  }
+
+  async function run(label: string, send: () => Promise<string>) {
+    if (!address || isWorking) {
       return;
     }
     setIsWorking(true);
     clearErrorVisual();
     try {
       await ensureCreditcoin();
-      setStatus("Wallet network set to Creditcoin Testnet.");
+      setStatus(`Check MetaMask: ${label}`);
+      const hash = await send();
+      setLastHash(hash);
+      setStatus("Waiting for the block…");
+      await waitForTransaction(hash);
+      onChanged?.();
+      setStatus("Done. The line updated.");
     } catch (cause) {
       const message = walletErrorMessage(cause);
       showError(message);
@@ -194,42 +242,31 @@ export function WalletTerminal({
     }
   }
 
-  async function prepareDeposit() {
-    if (!canPrepare || !address || isWorking) {
-      showError("Connect a wallet and enter an amount first.");
+  async function payIn() {
+    const value = await parseAmount();
+    if (!value || !address) {
       return;
     }
+    await run("pay in", () => sendClearinghouseFund(address, value));
+  }
 
-    let value: bigint;
-    try {
-      value = depositValue(amount);
-    } catch {
-      showError("Enter a valid CTC amount.");
+  async function payDealBack() {
+    const value = await parseAmount();
+    if (!value || !address) {
       return;
     }
-    if (value <= BigInt(0)) {
-      showError("Enter a valid CTC amount.");
+    if (!deal?.places.length) {
+      showError("Nobody has paid in yet.");
       return;
     }
+    await run("pay the deal back", () => sendClearinghouseRepay(address, value));
+  }
 
-    setIsWorking(true);
-    clearErrorVisual();
-    try {
-      await ensureCreditcoin();
-      setStatus("Check MetaMask and confirm the deposit to the clearinghouse.");
-      const hash = await sendClearinghouseFund(address, value);
-      setLastHash(hash);
-      setStatus("Deposit sent. Waiting for the block to lock your place…");
-      await waitForTransaction(hash);
-      onDeposited?.();
-      setStatus(`Place locked. Tx ${hash.slice(0, 10)}…`);
-    } catch (cause) {
-      const message = walletErrorMessage(cause);
-      showError(message);
-      setStatus(message);
-    } finally {
-      setIsWorking(false);
+  async function collect() {
+    if (!address) {
+      return;
     }
+    await run("get your money back", () => sendClearinghousePayout(address));
   }
 
   return (
@@ -244,7 +281,23 @@ export function WalletTerminal({
               : "border-brand bg-brand text-white hover:bg-brandDark"
           }`}
           disabled={isWorking}
-          onClick={() => void useCreditcoin()}
+          onClick={() => {
+            void (async () => {
+              if (isWorking) return;
+              setIsWorking(true);
+              clearErrorVisual();
+              try {
+                await ensureCreditcoin();
+                setStatus("Wallet is on Creditcoin Testnet.");
+              } catch (cause) {
+                const message = walletErrorMessage(cause);
+                showError(message);
+                setStatus(message);
+              } finally {
+                setIsWorking(false);
+              }
+            })();
+          }}
         >
           {isWorking ? "Check MetaMask" : onCreditcoin ? "On Creditcoin" : "Use Creditcoin"}
         </button>
@@ -254,39 +307,59 @@ export function WalletTerminal({
         <label className="block font-mono text-xs uppercase tracking-[0.5px] text-mutedForeground" htmlFor="amount">
           Amount (CTC)
         </label>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <input
-            id="amount"
-            ref={inputRef}
-            className={`t-input min-w-0 flex-1 rounded-[8px] border bg-background px-4 py-3 font-mono text-foreground outline-none focus:border-ring ${isError ? "is-error border-destructive" : "border-input"} ${isShaking ? "is-shaking" : ""}`}
-            inputMode="decimal"
-            onChange={(event) => {
-              setAmount(event.target.value);
-              if (isError) clearErrorVisual();
-            }}
-            value={amount}
-          />
+        <input
+          id="amount"
+          ref={inputRef}
+          className={`t-input mt-2 w-full rounded-[8px] border bg-background px-4 py-3 font-mono text-foreground outline-none focus:border-ring ${isError ? "is-error border-destructive" : "border-input"} ${isShaking ? "is-shaking" : ""}`}
+          inputMode="decimal"
+          onChange={(event) => {
+            setAmount(event.target.value);
+            if (isError) clearErrorVisual();
+          }}
+          value={amount}
+        />
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <button
             type="button"
-            className="rounded-[8px] bg-foreground px-5 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!canPrepare || isWorking}
-            onClick={() => void prepareDeposit()}
+            className="rounded-[8px] bg-foreground px-4 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!canSendAmount || isWorking}
+            onClick={() => void payIn()}
           >
-            {isWorking ? "Check MetaMask" : "Prepare deposit"}
+            Pay in
+          </button>
+          <button
+            type="button"
+            className="rounded-[8px] border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!canSendAmount || isWorking || !deal?.places.length}
+            onClick={() => void payDealBack()}
+          >
+            Pay the deal back
+          </button>
+          <button
+            type="button"
+            className="rounded-[8px] bg-brand px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brandDark disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!address || isWorking || !yourTurn || !dealPaidEnough}
+            onClick={() => void collect()}
+          >
+            Get my money back
           </button>
         </div>
-        <p className="t-error-msg mt-2 text-xs text-destructive">{error || "Prepare sends CTC to the live Creditcoin clearinghouse."}</p>
+        <p className="t-error-msg mt-2 text-xs text-destructive">
+          {error || "Pay in puts money in the pot. Pay the deal back fills the pot. First in line gets paid first."}
+        </p>
       </div>
 
-      <p ref={statusRef} className="t-text-swap mt-3 font-mono text-xs text-mutedForeground">Connect your wallet to choose a facility and check your place in line.</p>
-      {lastHash ? (
+      <p ref={statusRef} className="t-text-swap mt-3 font-mono text-xs text-mutedForeground">
+        Connect your wallet to pay in and get paid back.
+      </p>
+      {lastHash && lastHash !== "0x" ? (
         <a
           className="mt-2 inline-block font-mono text-xs text-brand underline-offset-2 hover:underline"
           href={explorerTx(lastHash)}
           rel="noreferrer"
           target="_blank"
         >
-          Open this deposit on Blockscout
+          Open this on Blockscout
         </a>
       ) : null}
     </div>
@@ -301,11 +374,11 @@ export function WalletGate({ children }: { children: ReactNode }) {
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mutedForeground">Wallet required</p>
         <h2 className="mt-2 text-xl font-bold text-foreground">
-          Connect a wallet to enter the clearing room.
+          Connect a wallet to enter the deal.
         </h2>
         <p className="mt-2 max-w-lg text-sm leading-6 text-mutedForeground">
-          You can send CTC and see who gets paid back first after you
-          connect. Nothing moves without your signature.
+          Pay in, pay the deal back, then the first person in line gets their
+          money back first.
         </p>
         <ConnectWalletButton className="mt-5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brandDark" />
       </div>
